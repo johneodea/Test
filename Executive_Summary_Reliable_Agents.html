@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Summary: Building Reliable Cortex Agents</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #1a1a2e;
+            background: #fafbfc;
+        }
+        h1 {
+            color: #1a1a2e;
+            border-bottom: 3px solid #29b5e8;
+            padding-bottom: 12px;
+            font-size: 2em;
+        }
+        h2 {
+            color: #11567f;
+            margin-top: 2em;
+        }
+        h3 {
+            color: #1a8cba;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5em 0;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        th {
+            background: #11567f;
+            color: white;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e8ecf0;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background: #f0f9ff;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #e8f4fd 0%, #f0f9ff 100%);
+            border-left: 4px solid #29b5e8;
+            padding: 20px 24px;
+            margin: 1.5em 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .highlight-box h3 {
+            margin-top: 0;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 1.5em 0;
+        }
+        .metric-card {
+            background: white;
+            border: 1px solid #e8ecf0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .metric-card .value {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #11567f;
+        }
+        .metric-card .label {
+            font-size: 0.85em;
+            color: #5a6775;
+            margin-top: 4px;
+        }
+        ol, ul {
+            padding-left: 1.5em;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+        strong {
+            color: #11567f;
+        }
+        .footer {
+            margin-top: 3em;
+            padding-top: 1em;
+            border-top: 1px solid #e8ecf0;
+            font-size: 0.85em;
+            color: #5a6775;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Executive Summary: Building Reliable Cortex Agents</h1>
+
+<h2>The Strategic Value of AI Agents in Healthcare Analytics</h2>
+<p>Cortex Agents represent a fundamental shift in how organizations interact with their data. Rather than requiring analysts to write SQL, navigate complex schemas, or understand join relationships, agents provide a natural language interface that translates business questions into accurate, governed answers.</p>
+
+<h2>Why Reliability Matters</h2>
+<p>Unreliable AI tools erode trust quickly. A single incorrect financial figure or misinterpreted clinical metric can undermine an entire analytics program. Cortex Agents address reliability through a layered architecture:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Layer</th>
+            <th>Purpose</th>
+            <th>Benefit</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Semantic Views</strong></td>
+            <td>Define business logic, metrics, and relationships in a governed model</td>
+            <td>Ensures consistent definitions across all queries</td>
+        </tr>
+        <tr>
+            <td><strong>Orchestration</strong></td>
+            <td>Routes questions to the correct tool based on domain</td>
+            <td>Prevents cross-domain confusion and hallucination</td>
+        </tr>
+        <tr>
+            <td><strong>Guardrails</strong></td>
+            <td>Token and time budgets constrain agent behavior</td>
+            <td>Predictable cost and response time</td>
+        </tr>
+        <tr>
+            <td><strong>Governed Data</strong></td>
+            <td>Agents inherit role-based access controls</td>
+            <td>Users only see data they are authorized to access</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Key Capabilities</h2>
+
+<div class="highlight-box">
+    <h3>1. Multi-Domain Intelligence</h3>
+    <p>A single agent can span multiple semantic views, giving users a unified interface across clinical operations, financial performance, and population health &mdash; without needing to know which system holds the answer.</p>
+</div>
+
+<div class="highlight-box">
+    <h3>2. Self-Service at Scale</h3>
+    <p>Agents eliminate the bottleneck of analyst-mediated reporting. Business users, clinical directors, and finance teams can ask questions directly and receive SQL-backed answers in seconds.</p>
+</div>
+
+<div class="highlight-box">
+    <h3>3. Auditability</h3>
+    <p>Every agent response is traceable: the SQL generated, the semantic view consulted, and the data returned are all logged. This creates an audit trail that satisfies both internal governance and regulatory requirements.</p>
+</div>
+
+<div class="highlight-box">
+    <h3>4. Iterative Improvement</h3>
+    <p>Agents improve over time through verified query results (VQRs), evaluation datasets, and semantic view refinement based on real usage patterns.</p>
+</div>
+
+<h2>Business Impact</h2>
+
+<div class="metric-grid">
+    <div class="metric-card">
+        <div class="value">Seconds</div>
+        <div class="label">Time to answer ad-hoc questions (vs. hours/days)</div>
+    </div>
+    <div class="metric-card">
+        <div class="value">Zero SQL</div>
+        <div class="label">Technical expertise required from end users</div>
+    </div>
+    <div class="metric-card">
+        <div class="value">Enforced</div>
+        <div class="label">Consistency of metric definitions</div>
+    </div>
+    <div class="metric-card">
+        <div class="value">Automatic</div>
+        <div class="label">Data governance compliance</div>
+    </div>
+</div>
+
+<h2>Our Implementation</h2>
+<p>The <strong>Healthcare Agent</strong> (<code>HEALTHCARE_ANALYTICS.GOLD.HEALTHCARE_AGENT</code>) demonstrates this architecture in practice:</p>
+<ul>
+    <li><strong>Clinical Analytics</strong> semantic view: 12 entities covering patients, encounters, conditions, procedures, medications, immunizations, allergies, care plans, providers, organizations, payers, and enriched geographic data</li>
+    <li><strong>Claims Financial Analytics</strong> semantic view: 8 entities covering claims, transactions, payers, enrollment, encounters, patients, providers, and organizations</li>
+</ul>
+<p>Together, these provide a comprehensive analytics layer spanning the full patient journey from clinical encounter through claims adjudication and payment.</p>
+
+<h2>Recommendation</h2>
+<p>Invest in semantic view quality as the foundation for agent reliability. The agent is only as good as the semantic model it consults. Prioritize:</p>
+<ol>
+    <li>Complete and accurate metric definitions</li>
+    <li>Clear entity descriptions and relationships</li>
+    <li>Verified query results for high-frequency questions</li>
+    <li>Regular evaluation cycles to measure and improve accuracy</li>
+</ol>
+
+<div class="footer">
+    <p>Document created: June 2026</p>
+</div>
+
+</body>
+</html>

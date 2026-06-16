@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snowflake Public Data Free - Interactive ERM & Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1419; color: #e1e8ed; line-height: 1.6; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        h1 { color: #29b5f6; font-size: 2em; margin-bottom: 10px; }
+        h2 { color: #4fc3f7; font-size: 1.4em; margin: 30px 0 15px; border-bottom: 1px solid #263238; padding-bottom: 8px; }
+        h3 { color: #81d4fa; font-size: 1.1em; margin: 20px 0 10px; }
+        .subtitle { color: #78909c; font-size: 0.9em; margin-bottom: 30px; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { padding: 10px 20px; background: #1a2332; border: 1px solid #263238; border-radius: 6px 6px 0 0; cursor: pointer; color: #90a4ae; transition: all 0.2s; }
+        .tab:hover { background: #1e3a5f; color: #4fc3f7; }
+        .tab.active { background: #1565c0; color: #fff; border-color: #1565c0; }
+        .tab-content { display: none; background: #1a2332; border: 1px solid #263238; border-radius: 0 6px 6px 6px; padding: 25px; }
+        .tab-content.active { display: block; }
+        .erm-container { width: 100%; overflow-x: auto; background: #0d1117; border-radius: 8px; padding: 20px; }
+        svg { width: 100%; height: auto; min-height: 600px; }
+        .node { cursor: pointer; transition: transform 0.2s; }
+        .node:hover { transform: scale(1.02); }
+        .node rect { rx: 8; ry: 8; stroke-width: 2; }
+        .node text { font-family: 'SF Mono', 'Fira Code', monospace; }
+        .link { fill: none; stroke-width: 1.5; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #1565c0; color: #fff; padding: 10px 12px; text-align: left; font-size: 0.85em; }
+        td { padding: 8px 12px; border-bottom: 1px solid #263238; font-size: 0.85em; }
+        tr:hover td { background: #1e3a5f; }
+        code { background: #263238; padding: 2px 6px; border-radius: 3px; font-family: 'SF Mono', monospace; font-size: 0.85em; color: #4fc3f7; }
+        pre { background: #0d1117; border: 1px solid #263238; border-radius: 6px; padding: 15px; overflow-x: auto; margin: 10px 0; }
+        pre code { background: none; padding: 0; color: #e1e8ed; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+        .card { background: #1a2332; border: 1px solid #263238; border-radius: 8px; padding: 15px; }
+        .card h4 { color: #4fc3f7; margin-bottom: 8px; font-size: 0.95em; }
+        .card p { color: #90a4ae; font-size: 0.85em; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; margin-right: 5px; }
+        .badge-index { background: #1b5e20; color: #a5d6a7; }
+        .badge-ts { background: #e65100; color: #ffcc80; }
+        .badge-attr { background: #4a148c; color: #ce93d8; }
+        .badge-meta { background: #37474f; color: #b0bec5; }
+        .search-box { width: 100%; padding: 10px 15px; background: #0d1117; border: 1px solid #263238; border-radius: 6px; color: #e1e8ed; font-size: 0.9em; margin-bottom: 15px; }
+        .search-box:focus { outline: none; border-color: #1565c0; }
+        .highlight { background: #1565c0; color: #fff; padding: 1px 3px; border-radius: 2px; }
+        #tableList .table-item { padding: 8px 12px; border-bottom: 1px solid #1a2332; cursor: pointer; }
+        #tableList .table-item:hover { background: #1e3a5f; }
+        .tooltip { position: absolute; background: #263238; border: 1px solid #37474f; border-radius: 6px; padding: 10px; font-size: 0.8em; max-width: 300px; z-index: 1000; display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Snowflake Public Data Free</h1>
+    <p class="subtitle">Interactive Entity-Relationship Model & Learning Guide | Database: SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE</p>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('erm')">Interactive ERM</div>
+        <div class="tab" onclick="showTab('domains')">Data Domains</div>
+        <div class="tab" onclick="showTab('tables')">Table Explorer</div>
+        <div class="tab" onclick="showTab('joins')">Join Patterns</div>
+        <div class="tab" onclick="showTab('queries')">Quick Start SQL</div>
+    </div>
+
+    <div id="erm" class="tab-content active">
+        <h2>Entity-Relationship Model</h2>
+        <p style="color:#78909c; margin-bottom:15px;">Click on any entity to see its details. Arrows show join relationships.</p>
+        <div class="erm-container">
+            <svg id="ermDiagram" viewBox="0 0 1200 800">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#546e7a"/>
+                    </marker>
+                </defs>
+
+                <line x1="200" y1="120" x2="450" y2="120" class="link" stroke="#546e7a" marker-end="url(#arrowhead)"/>
+                <line x1="200" y1="100" x2="200" y2="300" class="link" stroke="#4fc3f7" stroke-dasharray="5,3"/>
+                <line x1="200" y1="300" x2="200" y2="450" class="link" stroke="#4fc3f7" stroke-dasharray="5,3"/>
+                <line x1="700" y1="120" x2="700" y2="300" class="link" stroke="#ff9800" stroke-dasharray="5,3"/>
+                <line x1="700" y1="300" x2="850" y2="300" class="link" stroke="#546e7a" marker-end="url(#arrowhead)"/>
+                <line x1="700" y1="120" x2="900" y2="120" class="link" stroke="#546e7a" marker-end="url(#arrowhead)"/>
+                <line x1="200" y1="450" x2="450" y2="450" class="link" stroke="#546e7a" marker-end="url(#arrowhead)"/>
+                <line x1="700" y1="450" x2="700" y2="600" class="link" stroke="#546e7a" marker-end="url(#arrowhead)"/>
+                <line x1="200" y1="600" x2="200" y2="700" class="link" stroke="#9c27b0" stroke-dasharray="5,3"/>
+
+                <text x="250" y="210" fill="#78909c" font-size="11">GEO_ID</text>
+                <text x="250" y="380" fill="#78909c" font-size="11">GEO_ID</text>
+                <text x="720" y="210" fill="#78909c" font-size="11">TICKER</text>
+                <text x="760" y="310" fill="#78909c" font-size="11">COMPANY_ID</text>
+                <text x="760" y="130" fill="#78909c" font-size="11">COMPANY_ID</text>
+                <text x="300" y="460" fill="#78909c" font-size="11">VARIABLE</text>
+                <text x="720" y="530" fill="#78909c" font-size="11">ID_RSSD</text>
+
+                <!-- GEOGRAPHY_INDEX -->
+                <g class="node" onclick="showDetail('geo_index')">
+                    <rect x="50" y="50" width="280" height="100" fill="#1b5e20" stroke="#4caf50"/>
+                    <text x="70" y="80" fill="#a5d6a7" font-size="13" font-weight="bold">GEOGRAPHY_INDEX</text>
+                    <text x="70" y="100" fill="#c8e6c9" font-size="11">GEO_ID | GEO_NAME | LEVEL</text>
+                    <text x="70" y="118" fill="#c8e6c9" font-size="11">ISO_ALPHA2 | ISO_ALPHA3</text>
+                    <text x="70" y="136" fill="#81c784" font-size="10">Central dimension - joins to all timeseries</text>
+                </g>
+
+                <!-- GEOGRAPHY_HIERARCHY -->
+                <g class="node" onclick="showDetail('geo_hier')">
+                    <rect x="450" y="60" width="200" height="80" fill="#1b5e20" stroke="#66bb6a"/>
+                    <text x="470" y="90" fill="#a5d6a7" font-size="12" font-weight="bold">GEOGRAPHY_HIERARCHY</text>
+                    <text x="470" y="110" fill="#c8e6c9" font-size="11">PARENT_GEO_ID</text>
+                    <text x="470" y="126" fill="#c8e6c9" font-size="11">GEO_ID (child)</text>
+                </g>
+
+                <!-- COMPANY_INDEX -->
+                <g class="node" onclick="showDetail('company_index')">
+                    <rect x="550" y="50" width="280" height="100" fill="#0d47a1" stroke="#42a5f5" transform="translate(0,0)"/>
+                    <rect x="550" y="50" width="280" height="100" fill="#0d47a1" stroke="#42a5f5"/>
+                    <text x="570" y="80" fill="#90caf9" font-size="13" font-weight="bold">COMPANY_INDEX</text>
+                    <text x="570" y="100" fill="#bbdefb" font-size="11">COMPANY_ID | COMPANY_NAME</text>
+                    <text x="570" y="118" fill="#bbdefb" font-size="11">PRIMARY_TICKER | EIN | CIK</text>
+                    <text x="570" y="136" fill="#64b5f6" font-size="10">Links companies to securities & stocks</text>
+                </g>
+
+                <!-- TIMESERIES (Generic) -->
+                <g class="node" onclick="showDetail('timeseries')">
+                    <rect x="50" y="250" width="280" height="110" fill="#e65100" stroke="#ff9800"/>
+                    <text x="70" y="280" fill="#ffcc80" font-size="13" font-weight="bold">TIMESERIES TABLES (55+)</text>
+                    <text x="70" y="300" fill="#ffe0b2" font-size="11">GEO_ID | VARIABLE | DATE</text>
+                    <text x="70" y="318" fill="#ffe0b2" font-size="11">VALUE | UNIT | VARIABLE_NAME</text>
+                    <text x="70" y="340" fill="#ffb74d" font-size="10">Standard pattern for all fact data</text>
+                </g>
+
+                <!-- STOCK_PRICE_TIMESERIES -->
+                <g class="node" onclick="showDetail('stock')">
+                    <rect x="550" y="250" width="280" height="100" fill="#bf360c" stroke="#ff7043"/>
+                    <text x="570" y="280" fill="#ffab91" font-size="13" font-weight="bold">STOCK_PRICE_TIMESERIES</text>
+                    <text x="570" y="300" fill="#ffccbc" font-size="11">TICKER | ASSET_CLASS | DATE</text>
+                    <text x="570" y="318" fill="#ffccbc" font-size="11">VARIABLE | VALUE</text>
+                    <text x="570" y="336" fill="#ff8a65" font-size="10">Daily OHLCV for US securities</text>
+                </g>
+
+                <!-- COMPANY_SECURITY_RELATIONSHIPS -->
+                <g class="node" onclick="showDetail('comp_sec')">
+                    <rect x="870" y="70" width="280" height="80" fill="#1a237e" stroke="#5c6bc0"/>
+                    <text x="890" y="95" fill="#9fa8da" font-size="11" font-weight="bold">COMPANY_SECURITY_RELATIONSHIPS</text>
+                    <text x="890" y="115" fill="#c5cae9" font-size="11">COMPANY_ID | SECURITY_ID</text>
+                    <text x="890" y="131" fill="#c5cae9" font-size="11">SECURITY_ID_TYPE | SECURITY_NAME</text>
+                </g>
+
+                <!-- COMPANY_RELATIONSHIPS -->
+                <g class="node" onclick="showDetail('comp_rel')">
+                    <rect x="870" y="260" width="280" height="80" fill="#1a237e" stroke="#7986cb"/>
+                    <text x="890" y="285" fill="#9fa8da" font-size="11" font-weight="bold">COMPANY_RELATIONSHIPS</text>
+                    <text x="890" y="305" fill="#c5cae9" font-size="11">COMPANY_ID | RELATED_COMPANY_ID</text>
+                    <text x="890" y="321" fill="#c5cae9" font-size="11">RELATIONSHIP_TYPE | START/END</text>
+                </g>
+
+                <!-- ATTRIBUTES -->
+                <g class="node" onclick="showDetail('attributes')">
+                    <rect x="400" y="410" width="280" height="100" fill="#4a148c" stroke="#ab47bc"/>
+                    <text x="420" y="440" fill="#ce93d8" font-size="13" font-weight="bold">*_ATTRIBUTES TABLES</text>
+                    <text x="420" y="460" fill="#e1bee7" font-size="11">VARIABLE | VARIABLE_NAME</text>
+                    <text x="420" y="478" fill="#e1bee7" font-size="11">MEASURE | UNIT | FREQUENCY</text>
+                    <text x="420" y="496" fill="#ba68c8" font-size="10">Decode VARIABLE codes into descriptions</text>
+                </g>
+
+                <!-- FINANCIAL_INSTITUTION_INDEX -->
+                <g class="node" onclick="showDetail('fi_index')">
+                    <rect x="550" y="430" width="280" height="100" fill="#004d40" stroke="#26a69a"/>
+                    <text x="570" y="460" fill="#80cbc4" font-size="12" font-weight="bold">FINANCIAL_INSTITUTION_INDEX</text>
+                    <text x="570" y="480" fill="#b2dfdb" font-size="11">ID_RSSD | NAME | CATEGORY</text>
+                    <text x="570" y="498" fill="#b2dfdb" font-size="11">FDIC_CERT_ID | STATE | ACTIVE</text>
+                    <text x="570" y="516" fill="#4db6ac" font-size="10">FDIC-insured bank reference</text>
+                </g>
+
+                <!-- FINANCIAL_INSTITUTION_HIERARCHY -->
+                <g class="node" onclick="showDetail('fi_hier')">
+                    <rect x="550" y="570" width="280" height="90" fill="#004d40" stroke="#4db6ac"/>
+                    <text x="570" y="595" fill="#80cbc4" font-size="12" font-weight="bold">FI_HIERARCHY</text>
+                    <text x="570" y="615" fill="#b2dfdb" font-size="11">ID_RSSD_PARENT | ID_RSSD_OFFSPRING</text>
+                    <text x="570" y="633" fill="#b2dfdb" font-size="11">RELATIONSHIP_LEVEL | % CONTROL</text>
+                </g>
+
+                <!-- METADATA TABLES -->
+                <g class="node" onclick="showDetail('metadata')">
+                    <rect x="50" y="580" width="280" height="100" fill="#37474f" stroke="#78909c"/>
+                    <text x="70" y="610" fill="#b0bec5" font-size="13" font-weight="bold">METADATA TABLES</text>
+                    <text x="70" y="630" fill="#cfd8dc" font-size="11">PUBLIC_DATA_CATALOG</text>
+                    <text x="70" y="648" fill="#cfd8dc" font-size="11">PUBLIC_DATA_DICTIONARY</text>
+                    <text x="70" y="666" fill="#cfd8dc" font-size="11">PUBLIC_DATA_VARIABLE_CATALOG</text>
+                </g>
+
+                <!-- FX_RATES -->
+                <g class="node" onclick="showDetail('fx')">
+                    <rect x="50" y="420" width="200" height="70" fill="#311b92" stroke="#7c4dff"/>
+                    <text x="70" y="448" fill="#b388ff" font-size="12" font-weight="bold">FX_RATES_TIMESERIES</text>
+                    <text x="70" y="468" fill="#d1c4e9" font-size="11">BASE/QUOTE CURRENCY</text>
+                    <text x="70" y="484" fill="#d1c4e9" font-size="11">DATE | VALUE</text>
+                </g>
+
+                <!-- Legend -->
+                <g transform="translate(900, 450)">
+                    <text x="0" y="0" fill="#78909c" font-size="12" font-weight="bold">LEGEND</text>
+                    <rect x="0" y="10" width="14" height="14" fill="#1b5e20" stroke="#4caf50"/>
+                    <text x="20" y="22" fill="#a5d6a7" font-size="11">Reference/Index</text>
+                    <rect x="0" y="30" width="14" height="14" fill="#e65100" stroke="#ff9800"/>
+                    <text x="20" y="42" fill="#ffcc80" font-size="11">Timeseries/Fact</text>
+                    <rect x="0" y="50" width="14" height="14" fill="#4a148c" stroke="#ab47bc"/>
+                    <text x="20" y="62" fill="#ce93d8" font-size="11">Attributes</text>
+                    <rect x="0" y="70" width="14" height="14" fill="#37474f" stroke="#78909c"/>
+                    <text x="20" y="82" fill="#b0bec5" font-size="11">Metadata</text>
+                    <line x1="0" y1="95" x2="30" y2="95" stroke="#4fc3f7" stroke-dasharray="5,3"/>
+                    <text x="35" y="99" fill="#4fc3f7" font-size="11">Join path</text>
+                    <line x1="0" y1="112" x2="30" y2="112" stroke="#546e7a" marker-end="url(#arrowhead)"/>
+                    <text x="35" y="116" fill="#90a4ae" font-size="11">FK reference</text>
+                </g>
+            </svg>
+        </div>
+        <div id="detailPanel" style="margin-top:15px; padding:15px; background:#0d1117; border-radius:8px; display:none;">
+            <h3 id="detailTitle"></h3>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <div id="domains" class="tab-content">
+        <h2>Data Domains (12 Categories)</h2>
+        <div class="grid">
+            <div class="card"><h4>1. Demographics & Population</h4><p>American Community Survey, Data Commons timeseries. Annual estimates at national to block-group level.</p></div>
+            <div class="card"><h4>2. Economics & Finance</h4><p>GDP, CPI, unemployment, retail sales, mortgage rates from BLS, Fed, Treasury, IMF, World Bank, OECD, ECB, BIS.</p></div>
+            <div class="card"><h4>3. Capital Markets</h4><p>Daily stock prices (OHLCV), FX rates, SEC filings (10-Q/10-K metrics, NPORT, Form ADV).</p></div>
+            <div class="card"><h4>4. Banking & Financial Institutions</h4><p>Bank financials, FDIC deposits, parent-subsidiary hierarchies, call reports.</p></div>
+            <div class="card"><h4>5. Real Estate & Housing</h4><p>FHFA house price indexes, mortgage performance, appraisals, Freddie Mac HPI, construction permits, homelessness.</p></div>
+            <div class="card"><h4>6. Weather & Climate</h4><p>NOAA daily global data (80k+ stations), METAR/TAF airport weather, NWS observations, water supply.</p></div>
+            <div class="card"><h4>7. Energy & Environment</h4><p>EIA energy stats, EPA emissions, GHG by sector (Climate Watch, EDGAR, OWID), nuclear reactors.</p></div>
+            <div class="card"><h4>8. Crime & Safety</h4><p>FBI national/state crime estimates. Urban crime by city, zip, offense category.</p></div>
+            <div class="card"><h4>9. Transportation</h4><p>US DOT domestic air segment data (non-stop routes, carriers, passengers).</p></div>
+            <div class="card"><h4>10. Labor & Employment</h4><p>ILO global labor stats, weekly unemployment claims, WARN Act layoff notices.</p></div>
+            <div class="card"><h4>11. Tax & Migration</h4><p>IRS income stats, migration flows (county-to-county), Form 990 nonprofits, Economic Census.</p></div>
+            <div class="card"><h4>12. International Trade</h4><p>WTO trade flows, USDA ag commodities, UNIDO manufacturing, Canadian/UK statistics.</p></div>
+        </div>
+    </div>
+
+    <div id="tables" class="tab-content">
+        <h2>Table Explorer</h2>
+        <input type="text" class="search-box" id="tableSearch" placeholder="Search tables by name or description..." oninput="filterTables()">
+        <div id="tableList"></div>
+    </div>
+
+    <div id="joins" class="tab-content">
+        <h2>Key Join Patterns</h2>
+        <table>
+            <tr><th>Pattern</th><th>Left Table</th><th>Right Table</th><th>Join Key</th></tr>
+            <tr><td>Geography enrichment</td><td>Any timeseries</td><td><code>GEOGRAPHY_INDEX</code></td><td><code>GEO_ID</code></td></tr>
+            <tr><td>Geography hierarchy</td><td><code>GEOGRAPHY_INDEX</code></td><td><code>GEOGRAPHY_HIERARCHY</code></td><td><code>GEO_ID</code></td></tr>
+            <tr><td>Variable metadata</td><td>Any timeseries</td><td><code>*_ATTRIBUTES</code></td><td><code>VARIABLE</code></td></tr>
+            <tr><td>Company &rarr; Stock</td><td><code>COMPANY_INDEX</code></td><td><code>STOCK_PRICE_TIMESERIES</code></td><td><code>PRIMARY_TICKER = TICKER</code></td></tr>
+            <tr><td>Company &rarr; Securities</td><td><code>COMPANY_INDEX</code></td><td><code>COMPANY_SECURITY_RELATIONSHIPS</code></td><td><code>COMPANY_ID</code></td></tr>
+            <tr><td>Company hierarchy</td><td><code>COMPANY_INDEX</code></td><td><code>COMPANY_RELATIONSHIPS</code></td><td><code>COMPANY_ID</code></td></tr>
+            <tr><td>Bank hierarchy</td><td><code>FINANCIAL_INSTITUTION_INDEX</code></td><td><code>FINANCIAL_INSTITUTION_HIERARCHY</code></td><td><code>ID_RSSD</code></td></tr>
+            <tr><td>Holiday calendar</td><td>Any timeseries</td><td><code>PUBLIC_HOLIDAY_CALENDAR</code></td><td><code>GEO_ID + DATE</code></td></tr>
+            <tr><td>FEMA regions</td><td><code>GEOGRAPHY_INDEX</code></td><td><code>FEMA_REGION_INDEX</code></td><td><code>STATE_GEO_ID</code></td></tr>
+        </table>
+
+        <h3>Standard Timeseries Pattern</h3>
+        <pre><code>SELECT g.GEO_NAME, g.LEVEL, t.VARIABLE_NAME, t.DATE, t.VALUE, t.UNIT
+FROM &lt;ANY_TIMESERIES_TABLE&gt; t
+JOIN GEOGRAPHY_INDEX g ON t.GEO_ID = g.GEO_ID
+WHERE &lt;filters&gt;
+ORDER BY t.DATE DESC;</code></pre>
+
+        <h3>Variable Decode Pattern</h3>
+        <pre><code>SELECT t.*, a.MEASURE, a.FREQUENCY, a.UNIT
+FROM &lt;TIMESERIES&gt; t
+JOIN &lt;MATCHING_ATTRIBUTES&gt; a ON t.VARIABLE = a.VARIABLE
+WHERE &lt;filters&gt;;</code></pre>
+    </div>
+
+    <div id="queries" class="tab-content">
+        <h2>Quick Start SQL Queries</h2>
+
+        <h3>1. Browse the Data Catalog</h3>
+        <pre><code>SELECT TABLE_NAME, TABLE_TYPE, SHORT_DESCRIPTION
+FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.PUBLIC_DATA_CATALOG
+ORDER BY TABLE_TYPE, TABLE_NAME;</code></pre>
+
+        <h3>2. Search for Specific Variables</h3>
+        <pre><code>SELECT TABLE_NAME, VARIABLE_NAME, UNIT, FREQUENCY, MIN_DATE, MAX_DATE
+FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.PUBLIC_DATA_VARIABLE_CATALOG
+WHERE VARIABLE_NAME ILIKE '%GDP%'
+LIMIT 20;</code></pre>
+
+        <h3>3. US GDP with Geography Names</h3>
+        <pre><code>SELECT g.GEO_NAME, t.VARIABLE_NAME, t.DATE, t.VALUE, t.UNIT
+FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g ON t.GEO_ID = g.GEO_ID
+WHERE t.VARIABLE_NAME ILIKE '%Real Gross Domestic Product%'
+  AND g.GEO_NAME = 'United States'
+ORDER BY t.DATE DESC
+LIMIT 20;</code></pre>
+
+        <h3>4. Company Stock Price Lookup</h3>
+        <pre><code>SELECT c.COMPANY_NAME, s.TICKER, s.VARIABLE_NAME, s.DATE, s.VALUE
+FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.COMPANY_INDEX c
+JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.STOCK_PRICE_TIMESERIES s
+  ON c.PRIMARY_TICKER = s.TICKER
+WHERE c.COMPANY_NAME ILIKE '%Apple%'
+  AND s.VARIABLE_NAME = 'Post-Market Close'
+ORDER BY s.DATE DESC
+LIMIT 20;</code></pre>
+
+        <h3>5. Geography Hierarchy Roll-up</h3>
+        <pre><code>SELECT p.GEO_NAME AS parent, p.LEVEL AS parent_level,
+       c.GEO_NAME AS child, c.LEVEL AS child_level
+FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_HIERARCHY h
+JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX p ON h.PARENT_GEO_ID = p.GEO_ID
+JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX c ON h.GEO_ID = c.GEO_ID
+WHERE p.GEO_NAME = 'Texas'
+LIMIT 20;</code></pre>
+
+        <h3>6. Cross-Domain Analysis (Weather + Holidays)</h3>
+        <pre><code>SELECT w.DATE, g.GEO_NAME, w.VARIABLE_NAME, w.VALUE,
+       h.HOLIDAY_NAME
+FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.NOAA_WEATHER_METRICS_TIMESERIES w
+JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g ON w.GEO_ID = g.GEO_ID
+LEFT JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.PUBLIC_HOLIDAY_CALENDAR h
+  ON w.GEO_ID = h.GEO_ID AND w.DATE = h.DATE
+WHERE g.GEO_NAME ILIKE '%Chicago%'
+  AND w.DATE >= '2025-01-01'
+ORDER BY w.DATE
+LIMIT 20;</code></pre>
+    </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const tables = [
+    {name:"GEOGRAPHY_INDEX", type:"index", desc:"Central geography dimension with GEO_ID, names, ISO codes, and hierarchy levels (Country/State/County/City/Zip)"},
+    {name:"GEOGRAPHY_HIERARCHY", type:"index", desc:"Parent-child geography relationships for roll-up aggregation"},
+    {name:"COMPANY_INDEX", type:"index", desc:"Company reference with IDs, tickers, exchanges, EIN, CIK, LEI"},
+    {name:"COMPANY_RELATIONSHIPS", type:"index", desc:"Company-to-company relationships with types and dates"},
+    {name:"COMPANY_SECURITY_RELATIONSHIPS", type:"index", desc:"Maps companies to their securities (stocks, bonds)"},
+    {name:"CALENDAR_INDEX", type:"index", desc:"Calendar periods with start/end dates and ordinal positions"},
+    {name:"NAICS_CODE_INDEX", type:"index", desc:"Industry classification codes (NAICS) with sectors and hierarchy"},
+    {name:"FEMA_REGION_INDEX", type:"index", desc:"FEMA regions with addresses, coordinates, and covered states"},
+    {name:"FINANCIAL_INSTITUTION_INDEX", type:"index", desc:"FDIC-insured bank reference data (ID_RSSD, name, category, state)"},
+    {name:"IMEI_TAC_DEVICE", type:"index", desc:"Mobile device TAC codes with brand and model names"},
+    {name:"FINANCIAL_INSTITUTION_HIERARCHY", type:"index", desc:"Bank parent-subsidiary ownership relationships"},
+    {name:"PUBLIC_HOLIDAY_CALENDAR", type:"index", desc:"Public holidays by country/subdivision with financial market flag"},
+    {name:"AMERICAN_COMMUNITY_SURVEY_TIMESERIES", type:"timeseries", desc:"Annual ACS population, demographic, economic, housing data at multiple geo levels"},
+    {name:"FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES", type:"timeseries", desc:"GDP, CPI, unemployment, mortgage rates, retail sales from multiple sources"},
+    {name:"STOCK_PRICE_TIMESERIES", type:"timeseries", desc:"Daily open/close/high/low prices and volumes for US securities (Nasdaq)"},
+    {name:"FX_RATES_TIMESERIES", type:"timeseries", desc:"Foreign exchange rates from ECB, BIS, IMF, and central banks"},
+    {name:"NOAA_WEATHER_METRICS_TIMESERIES", type:"timeseries", desc:"Daily global temp, precip, snow from 80,000+ weather stations"},
+    {name:"BUREAU_OF_LABOR_STATISTICS_EMPLOYMENT_TIMESERIES", type:"timeseries", desc:"Employment, JOLTS, wages across US regions"},
+    {name:"BUREAU_OF_LABOR_STATISTICS_PRICE_TIMESERIES", type:"timeseries", desc:"Consumer Price Index data measuring inflation"},
+    {name:"FEDERAL_RESERVE_TIMESERIES", type:"timeseries", desc:"Credit, industrial production, capacity utilization"},
+    {name:"US_TREASURY_TIMESERIES", type:"timeseries", desc:"Bond yields, savings bonds, treasury rates"},
+    {name:"FBI_CRIME_TIMESERIES", type:"timeseries", desc:"National and state-level crime estimates from FBI"},
+    {name:"URBAN_CRIME_TIMESERIES", type:"timeseries", desc:"City-level historical crime data by offense category"},
+    {name:"EIA_ENERGY_TIMESERIES", type:"timeseries", desc:"Natural gas, electricity, petroleum production and consumption"},
+    {name:"FHFA_HOUSE_PRICE_TIMESERIES", type:"timeseries", desc:"House price indexes since 1975 across US geographies"},
+    {name:"FREDDIE_MAC_HOUSING_TIMESERIES", type:"timeseries", desc:"HPI and weekly mortgage interest rates"},
+    {name:"INTERNATIONAL_MONETARY_FUND_TIMESERIES", type:"timeseries", desc:"Global economic and financial indicators from IMF"},
+    {name:"WORLD_BANK_TIMESERIES", type:"timeseries", desc:"International ESG, debt, economic forecasts"},
+    {name:"OECD_TIMESERIES", type:"timeseries", desc:"Trade, wages, income, labor for OECD countries"},
+    {name:"CLIMATE_WATCH_TIMESERIES", type:"timeseries", desc:"GHG emissions by country, sector, and gas"},
+    {name:"EPA_CAM_TIMESERIES", type:"timeseries", desc:"Power plant emissions (SO2, NOx, CO2) from EPA"},
+    {name:"IRS_INDIVIDUAL_INCOME_TIMESERIES", type:"timeseries", desc:"Income statistics by zip/county/state"},
+    {name:"IRS_ORIGIN_DESTINATION_MIGRATION_TIMESERIES", type:"timeseries", desc:"County-to-county migration flows"},
+    {name:"WARN_ACT_TIMESERIES", type:"timeseries", desc:"WARN Act layoff notices for major states"},
+    {name:"WORLD_TRADE_ORGANIZATION_TIMESERIES", type:"timeseries", desc:"International trade flows and tariff rates"},
+    {name:"FINANCIAL_INSTITUTION_TIMESERIES", type:"timeseries", desc:"Bank financial statements and performance metrics"},
+    {name:"SEC_METRICS_TIMESERIES", type:"timeseries", desc:"Revenue segments from SEC 10-Q/10-K filings"},
+    {name:"US_DEPARTMENT_OF_TRANSPORTATION_TIMESERIES", type:"timeseries", desc:"Domestic air segment data"},
+    {name:"AMERICAN_COMMUNITY_SURVEY_ATTRIBUTES", type:"attributes", desc:"Decode ACS VARIABLE codes into census subjects, measures, demographics"},
+    {name:"FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES", type:"attributes", desc:"Decode economic indicator variables with release source, frequency"},
+    {name:"URBAN_CRIME_ATTRIBUTES", type:"attributes", desc:"Decode crime variables with offense category and measure type"},
+    {name:"PUBLIC_DATA_CATALOG", type:"metadata", desc:"Master catalog of all tables with descriptions, sources, and related tables"},
+    {name:"PUBLIC_DATA_DICTIONARY", type:"metadata", desc:"Column-level documentation for every table"},
+    {name:"PUBLIC_DATA_VARIABLE_CATALOG", type:"metadata", desc:"Cross-table variable search with date ranges and geo coverage"}
+];
+
+function showTab(tabId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+}
+
+function renderTableList(filtered) {
+    const list = filtered || tables;
+    const html = list.map(t => {
+        const badge = t.type === 'index' ? 'badge-index' :
+                      t.type === 'timeseries' ? 'badge-ts' :
+                      t.type === 'attributes' ? 'badge-attr' : 'badge-meta';
+        return `<div class="table-item"><span class="badge ${badge}">${t.type}</span> <code>${t.name}</code><br><small style="color:#78909c">${t.desc}</small></div>`;
+    }).join('');
+    document.getElementById('tableList').innerHTML = html;
+}
+
+function filterTables() {
+    const q = document.getElementById('tableSearch').value.toLowerCase();
+    const filtered = tables.filter(t => t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q));
+    renderTableList(filtered);
+}
+
+const details = {
+    geo_index: {title:"GEOGRAPHY_INDEX", content:"<p><b>Purpose:</b> Central dimension table for all geographic entities.</p><p><b>Key Columns:</b> GEO_ID (PK), GEO_NAME, LEVEL (Country/State/County/City/Zip/CBSA), ISO_ALPHA2, ISO_ALPHA3, ISO_3166_2_CODE</p><p><b>Join Pattern:</b> Nearly all timeseries tables have a GEO_ID column that joins here.</p><p><b>Tip:</b> Filter by LEVEL to get the granularity you need.</p>"},
+    geo_hier: {title:"GEOGRAPHY_HIERARCHY", content:"<p><b>Purpose:</b> Defines parent-child relationships between geographies.</p><p><b>Key Columns:</b> PARENT_GEO_ID, GEO_ID (child)</p><p><b>Use Case:</b> Roll up county data to state level, or state data to country level.</p>"},
+    company_index: {title:"COMPANY_INDEX", content:"<p><b>Purpose:</b> Master reference for companies with cross-reference IDs.</p><p><b>Key Columns:</b> COMPANY_ID (PK), COMPANY_NAME, PRIMARY_TICKER, PRIMARY_EXCHANGE_CODE, EIN, CIK, LEI, PERMID_COMPANY_ID</p><p><b>Join Pattern:</b> Use PRIMARY_TICKER to join to STOCK_PRICE_TIMESERIES.TICKER</p>"},
+    timeseries: {title:"TIMESERIES TABLES (55+ tables)", content:"<p><b>Standard Schema:</b> GEO_ID + VARIABLE + VARIABLE_NAME + DATE + VALUE + UNIT</p><p><b>Exceptions:</b> STOCK_PRICE uses TICKER; FX_RATES uses currency pairs; URBAN_CRIME adds CITY</p><p><b>Key Pattern:</b> Join to GEOGRAPHY_INDEX on GEO_ID for names; join to *_ATTRIBUTES on VARIABLE for metadata.</p>"},
+    stock: {title:"STOCK_PRICE_TIMESERIES", content:"<p><b>Purpose:</b> Daily stock prices and trading volumes for US securities.</p><p><b>Key Columns:</b> TICKER, ASSET_CLASS, PRIMARY_EXCHANGE_CODE, VARIABLE (Open/Close/High/Low/Volume), DATE, VALUE</p><p><b>Join:</b> COMPANY_INDEX.PRIMARY_TICKER = STOCK_PRICE_TIMESERIES.TICKER</p>"},
+    comp_sec: {title:"COMPANY_SECURITY_RELATIONSHIPS", content:"<p><b>Purpose:</b> Links companies to their issued securities.</p><p><b>Key Columns:</b> COMPANY_ID, SECURITY_ID_TYPE, SECURITY_ID, SECURITY_NAME</p>"},
+    comp_rel: {title:"COMPANY_RELATIONSHIPS", content:"<p><b>Purpose:</b> Corporate relationships (parent/subsidiary/affiliate).</p><p><b>Key Columns:</b> COMPANY_ID, RELATED_COMPANY_ID, RELATIONSHIP_TYPE, START/END dates</p>"},
+    attributes: {title:"*_ATTRIBUTES TABLES", content:"<p><b>Purpose:</b> Decode VARIABLE codes used in timeseries tables.</p><p><b>Pattern:</b> Each timeseries domain has a matching attributes table (e.g., FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES).</p><p><b>Key Columns:</b> VARIABLE (PK), VARIABLE_NAME, MEASURE, UNIT, FREQUENCY + domain-specific fields</p>"},
+    fi_index: {title:"FINANCIAL_INSTITUTION_INDEX", content:"<p><b>Purpose:</b> Reference data for FDIC-insured financial institutions.</p><p><b>Key Columns:</b> ID_RSSD (PK), NAME, CATEGORY, STATE, FDIC_CERT_ID, ACTIVE</p><p><b>Join:</b> Use ID_RSSD to join with FINANCIAL_INSTITUTION_HIERARCHY and FINANCIAL_INSTITUTION_TIMESERIES</p>"},
+    fi_hier: {title:"FINANCIAL_INSTITUTION_HIERARCHY", content:"<p><b>Purpose:</b> Parent-subsidiary ownership structure for banks.</p><p><b>Key Columns:</b> ID_RSSD_PARENT, ID_RSSD_OFFSPRING, RELATIONSHIP_LEVEL, PERCENT_CONTROL_OF_OFFSPRING</p>"},
+    metadata: {title:"METADATA TABLES", content:"<p><b>PUBLIC_DATA_CATALOG:</b> Describes every table with source, type, description, related tables.</p><p><b>PUBLIC_DATA_DICTIONARY:</b> Column-level documentation for all tables.</p><p><b>PUBLIC_DATA_VARIABLE_CATALOG:</b> Cross-table variable search with date ranges, geo levels, and data sources.</p><p><b>Tip:</b> Always start here when exploring a new domain!</p>"},
+    fx: {title:"FX_RATES_TIMESERIES", content:"<p><b>Purpose:</b> Foreign exchange rates for currency pairs.</p><p><b>Key Columns:</b> BASE_CURRENCY_ID/NAME, QUOTE_CURRENCY_ID/NAME, DATE, VALUE</p><p><b>Note:</b> Does NOT use GEO_ID. Uses currency pair identifiers instead.</p>"}
+};
+
+function showDetail(key) {
+    const d = details[key];
+    document.getElementById('detailTitle').textContent = d.title;
+    document.getElementById('detailContent').innerHTML = d.content;
+    document.getElementById('detailPanel').style.display = 'block';
+}
+
+renderTableList();
+</script>
+</body>
+</html>

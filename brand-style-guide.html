@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brand Style Guide: Workspace Skills for Cortex Code</title>
+  <style>
+    :root {
+      --brand-primary: #1B3A6B;
+      --brand-secondary: #2AAFCB;
+      --brand-bg: #F4F6F8;
+      --brand-surface: #FFFFFF;
+      --brand-text: #2D2D2D;
+      --brand-text-secondary: #6B7280;
+      --brand-border: #E5E7EB;
+      --brand-success: #10B981;
+      --brand-warning: #F59E0B;
+      --brand-error: #EF4444;
+      --brand-info: #3B82F6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: var(--brand-bg);
+      color: var(--brand-text);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    .report-header {
+      background-color: var(--brand-primary);
+      color: #FFFFFF;
+      padding: 2rem 2rem;
+      text-align: center;
+    }
+
+    .report-header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+    }
+
+    .report-header p {
+      margin: 0;
+      opacity: 0.85;
+      font-size: 1rem;
+    }
+
+    .report-container {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1.5rem 3rem;
+    }
+
+    .card {
+      background: var(--brand-surface);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      color: var(--brand-primary);
+      font-weight: 600;
+      font-size: 1.35rem;
+      margin-top: 0;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--brand-secondary);
+    }
+
+    h3 {
+      color: var(--brand-primary);
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-top: 1.5rem;
+    }
+
+    p, li {
+      color: var(--brand-text);
+      font-size: 0.95rem;
+    }
+
+    a {
+      color: var(--brand-secondary);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      font-family: 'Cascadia Code', 'Courier New', monospace;
+      background-color: var(--brand-bg);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--brand-primary);
+    }
+
+    pre {
+      background-color: #1e293b;
+      color: #e2e8f0;
+      padding: 1.25rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: 'Cascadia Code', 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+    }
+
+    th {
+      background-color: var(--brand-primary);
+      color: #FFFFFF;
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--brand-border);
+      font-size: 0.9rem;
+    }
+
+    tr:nth-child(even) {
+      background-color: var(--brand-bg);
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      background-color: var(--brand-secondary);
+      color: #FFFFFF;
+      border-radius: 50%;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-right: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-content h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .color-swatch-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .color-swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 120px;
+    }
+
+    .swatch-box {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      border: 1px solid var(--brand-border);
+      margin-bottom: 0.5rem;
+    }
+
+    .swatch-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--brand-text);
+      text-align: center;
+    }
+
+    .swatch-hex {
+      font-size: 0.75rem;
+      color: var(--brand-text-secondary);
+      font-family: 'Cascadia Code', 'Courier New', monospace;
+    }
+
+    .chart-colors {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .chart-color-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--brand-bg);
+      border-radius: 20px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+      font-family: 'Cascadia Code', 'Courier New', monospace;
+    }
+
+    .chart-color-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-indicators {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .note-box {
+      background: rgba(27, 58, 107, 0.05);
+      border-left: 4px solid var(--brand-secondary);
+      padding: 1rem 1.25rem;
+      border-radius: 0 6px 6px 0;
+      margin: 1rem 0;
+    }
+
+    .note-box p {
+      margin: 0.25rem 0;
+    }
+
+    .note-box strong {
+      color: var(--brand-primary);
+    }
+
+    .directory-tree {
+      background: var(--brand-bg);
+      border: 1px solid var(--brand-border);
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      font-family: 'Cascadia Code', 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+
+    .how-it-works-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .how-it-works-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--brand-bg);
+      border-radius: 6px;
+    }
+
+    .how-it-works-list li strong {
+      color: var(--brand-primary);
+      white-space: nowrap;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--brand-text-secondary);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--brand-border);
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="report-header">
+    <h1>Brand Style Guide</h1>
+    <p>Setting Up a Workspace Skill for Cortex Code</p>
+  </div>
+
+  <div class="report-container">
+
+    <!-- Overview -->
+    <div class="card">
+      <h2>Overview</h2>
+      <p>This guide teaches you how to create a <strong>workspace-level skill</strong> that instructs Cortex Code to apply your corporate brand color palette whenever it generates HTML reports, styled notebooks, or visual outputs.</p>
+      <p>Once configured, every analyst on your team gets brand-consistent outputs automatically &mdash; no manual prompting required.</p>
+    </div>
+
+    <!-- What Is a Workspace Skill -->
+    <div class="card">
+      <h2>What Is a Workspace Skill?</h2>
+      <p>A workspace skill is a Markdown file placed in the <code>.cortex/skills/</code> directory at the root of your workspace. Cortex Code automatically loads these files into context for every conversation, ensuring consistent behavior across all users and sessions.</p>
+      <div class="note-box">
+        <p><strong>Key Benefit:</strong> Skills are loaded automatically. Analysts never need to remember to include brand instructions in their prompts.</p>
+      </div>
+    </div>
+
+    <!-- Step-by-Step Setup -->
+    <div class="card">
+      <h2>Step-by-Step Setup</h2>
+
+      <div class="step">
+        <span class="step-number">1</span>
+        <div class="step-content">
+          <h3>Create the Directory Structure</h3>
+          <p>In your workspace root, create the following path:</p>
+          <div class="directory-tree">
+            workspace-root/<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;.cortex/<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;skills/
+          </div>
+          <p>From the terminal:</p>
+          <pre><code>mkdir -p .cortex/skills</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-number">2</span>
+        <div class="step-content">
+          <h3>Create the Skill File</h3>
+          <p>Create a Markdown file inside <code>.cortex/skills/</code>. Name it descriptively:</p>
+          <pre><code>.cortex/skills/brand-colors.md</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-number">3</span>
+        <div class="step-content">
+          <h3>Define Your Brand Palette</h3>
+          <p>Populate the file with your color definitions, typography rules, and CSS variables. See the full template below.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Primary Color Palette -->
+    <div class="card">
+      <h2>Primary Color Palette</h2>
+      <p>These are the core colors used throughout all generated outputs:</p>
+
+      <div class="color-swatch-row">
+        <div class="color-swatch">
+          <div class="swatch-box" style="background-color: #1B3A6B;"></div>
+          <span class="swatch-label">Brand Blue</span>
+          <span class="swatch-hex">#1B3A6B</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-box" style="background-color: #2AAFCB;"></div>
+          <span class="swatch-label">Brand Teal</span>
+          <span class="swatch-hex">#2AAFCB</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-box" style="background-color: #F4F6F8; border: 1px solid #E5E7EB;"></div>
+          <span class="swatch-label">Light Gray</span>
+          <span class="swatch-hex">#F4F6F8</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-box" style="background-color: #FFFFFF; border: 1px solid #E5E7EB;"></div>
+          <span class="swatch-label">White</span>
+          <span class="swatch-hex">#FFFFFF</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-box" style="background-color: #2D2D2D;"></div>
+          <span class="swatch-label">Dark Charcoal</span>
+          <span class="swatch-hex">#2D2D2D</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-box" style="background-color: #6B7280;"></div>
+          <span class="swatch-label">Medium Gray</span>
+          <span class="swatch-hex">#6B7280</span>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Color Name</th>
+            <th>Hex Code</th>
+            <th>Usage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Primary</td>
+            <td>Brand Blue</td>
+            <td><code>#1B3A6B</code></td>
+            <td>Headers, primary buttons, key highlights</td>
+          </tr>
+          <tr>
+            <td>Secondary</td>
+            <td>Brand Teal</td>
+            <td><code>#2AAFCB</code></td>
+            <td>Links, accents, chart emphasis</td>
+          </tr>
+          <tr>
+            <td>Background</td>
+            <td>Light Gray</td>
+            <td><code>#F4F6F8</code></td>
+            <td>Page backgrounds, alternating table rows</td>
+          </tr>
+          <tr>
+            <td>Surface</td>
+            <td>White</td>
+            <td><code>#FFFFFF</code></td>
+            <td>Card backgrounds, content areas</td>
+          </tr>
+          <tr>
+            <td>Text Primary</td>
+            <td>Dark Charcoal</td>
+            <td><code>#2D2D2D</code></td>
+            <td>Body text, labels</td>
+          </tr>
+          <tr>
+            <td>Text Secondary</td>
+            <td>Medium Gray</td>
+            <td><code>#6B7280</code></td>
+            <td>Captions, secondary information</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Chart / Accent Colors -->
+    <div class="card">
+      <h2>Accent / Chart Colors</h2>
+      <p>Use these colors in sequence for multi-series charts and visualizations:</p>
+      <div class="chart-colors">
+        <div class="chart-color-pill">
+          <span class="chart-color-dot" style="background-color: #2AAFCB;"></span>
+          #2AAFCB Teal
+        </div>
+        <div class="chart-color-pill">
+          <span class="chart-color-dot" style="background-color: #1B3A6B;"></span>
+          #1B3A6B Blue
+        </div>
+        <div class="chart-color-pill">
+          <span class="chart-color-dot" style="background-color: #F4A261;"></span>
+          #F4A261 Amber
+        </div>
+        <div class="chart-color-pill">
+          <span class="chart-color-dot" style="background-color: #E76F51;"></span>
+          #E76F51 Coral
+        </div>
+        <div class="chart-color-pill">
+          <span class="chart-color-dot" style="background-color: #2A9D8F;"></span>
+          #2A9D8F Green
+        </div>
+        <div class="chart-color-pill">
+          <span class="chart-color-dot" style="background-color: #9B5DE5;"></span>
+          #9B5DE5 Purple
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Indicators -->
+    <div class="card">
+      <h2>Status Indicators</h2>
+      <p>Standard colors for communicating state in reports:</p>
+      <div class="status-indicators">
+        <div class="status-badge">
+          <span class="status-dot" style="background-color: #10B981;"></span>
+          Success / Good
+        </div>
+        <div class="status-badge">
+          <span class="status-dot" style="background-color: #F59E0B;"></span>
+          Warning / Caution
+        </div>
+        <div class="status-badge">
+          <span class="status-dot" style="background-color: #EF4444;"></span>
+          Error / Critical
+        </div>
+        <div class="status-badge">
+          <span class="status-dot" style="background-color: #3B82F6;"></span>
+          Informational
+        </div>
+      </div>
+    </div>
+
+    <!-- Typography -->
+    <div class="card">
+      <h2>Typography</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Element</th>
+            <th>Font Family</th>
+            <th>Weight</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Headings</td>
+            <td><code>'Segoe UI', Arial, sans-serif</code></td>
+            <td>600 (Semi-bold)</td>
+          </tr>
+          <tr>
+            <td>Body Text</td>
+            <td><code>'Segoe UI', Arial, sans-serif</code></td>
+            <td>400 (Regular)</td>
+          </tr>
+          <tr>
+            <td>Code / Data</td>
+            <td><code>'Cascadia Code', 'Courier New', monospace</code></td>
+            <td>400 (Regular)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Skill File Template -->
+    <div class="card">
+      <h2>Full Skill File Template</h2>
+      <p>Copy the following into <code>.cortex/skills/brand-colors.md</code> and replace placeholder values with your actual brand colors:</p>
+      <pre><code># Corporate Brand Color Palette
+
+When generating HTML reports, dashboards, charts, styled notebook outputs,
+or any visual content, always apply the following brand guidelines.
+
+## Primary Colors
+
+| Role            | Color Name     | Hex Code  | Usage                                    |
+|-----------------|----------------|-----------|------------------------------------------|
+| Primary         | Brand Blue     | #1B3A6B   | Headers, primary buttons, key highlights |
+| Secondary       | Brand Teal     | #2AAFCB   | Links, accents, chart emphasis           |
+| Background      | Light Gray     | #F4F6F8   | Page backgrounds, alternating table rows |
+| Surface         | White          | #FFFFFF   | Card backgrounds, content areas          |
+| Text Primary    | Dark Charcoal  | #2D2D2D   | Body text, labels                        |
+| Text Secondary  | Medium Gray    | #6B7280   | Captions, secondary information          |
+
+## Accent / Chart Colors
+
+1. #2AAFCB (Teal)
+2. #1B3A6B (Blue)
+3. #F4A261 (Amber)
+4. #E76F51 (Coral)
+5. #2A9D8F (Green)
+6. #9B5DE5 (Purple)
+
+## Typography
+
+- Headings: font-family: 'Segoe UI', Arial, sans-serif; font-weight: 600
+- Body text: font-family: 'Segoe UI', Arial, sans-serif; font-weight: 400
+- Code/Data: font-family: 'Cascadia Code', 'Courier New', monospace
+
+## Example CSS Block
+
+:root {
+  --brand-primary: #1B3A6B;
+  --brand-secondary: #2AAFCB;
+  --brand-bg: #F4F6F8;
+  --brand-surface: #FFFFFF;
+  --brand-text: #2D2D2D;
+  --brand-text-secondary: #6B7280;
+  --brand-border: #E5E7EB;
+  --brand-success: #10B981;
+  --brand-warning: #F59E0B;
+  --brand-error: #EF4444;
+  --brand-info: #3B82F6;
+}
+
+## Important Notes
+
+- Never override these colors with default or generic styles
+- Maintain WCAG AA contrast ratios for text readability
+- Derive additional colors by adjusting opacity of brand colors</code></pre>
+    </div>
+
+    <!-- How It Works -->
+    <div class="card">
+      <h2>How It Works</h2>
+      <ul class="how-it-works-list">
+        <li>
+          <strong>Automatic Loading</strong>
+          <span>Cortex Code detects the file on every new conversation in the workspace</span>
+        </li>
+        <li>
+          <strong>Consistent Enforcement</strong>
+          <span>Any request to generate HTML, styled output, or charts will follow the palette</span>
+        </li>
+        <li>
+          <strong>No Manual Prompting</strong>
+          <span>Analysts don't need to remind Cortex Code about the brand; it's always in context</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Customization Tips -->
+    <div class="card">
+      <h2>Customization Tips</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Want to change...</th>
+            <th>Edit this section</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Company colors</td>
+            <td>Primary Colors table</td>
+          </tr>
+          <tr>
+            <td>Chart color sequence</td>
+            <td>Accent / Chart Colors list</td>
+          </tr>
+          <tr>
+            <td>Fonts</td>
+            <td>Typography section</td>
+          </tr>
+          <tr>
+            <td>Report layout rules</td>
+            <td>HTML Report Structure section</td>
+          </tr>
+          <tr>
+            <td>CSS variables</td>
+            <td>Example CSS Block</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Verifying -->
+    <div class="card">
+      <h2>Verifying It Works</h2>
+      <p>After creating the skill file, start a new conversation in the workspace and ask Cortex Code to generate a sample HTML report. It should automatically apply your brand colors without any additional prompting.</p>
+      <div class="note-box">
+        <p><strong>Test prompt:</strong> "Generate a sample HTML report showing quarterly revenue by region."</p>
+      </div>
+      <p>The output should use your defined header color, table styling, and chart palette &mdash; matching this very document's style.</p>
+    </div>
+
+    <!-- Multiple Skills -->
+    <div class="card">
+      <h2>Multiple Skills</h2>
+      <p>You can add additional skill files for other standards. Each file is loaded independently, so keep them focused on a single concern:</p>
+      <div class="directory-tree">
+        .cortex/skills/<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;brand-colors.md&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Color palette and visual styling<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;sql-standards.md&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# SQL naming conventions and formatting<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;report-templates.md&nbsp;&nbsp;&nbsp;# Standard report structures
+      </div>
+    </div>
+
+    <div class="footer">
+      Brand Style Guide &mdash; Generated using the defined workspace skill color palette
+    </div>
+
+  </div>
+
+</body>
+</html>

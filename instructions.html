@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation Navigator - User Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 820px;
+            margin: 40px auto;
+            padding: 0 24px;
+            color: #1e293b;
+            background: #f8fafc;
+        }
+        h1 {
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 12px;
+            color: #0f172a;
+        }
+        h2 {
+            margin-top: 36px;
+            color: #1e40af;
+        }
+        h3 {
+            color: #334155;
+        }
+        code {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        .note {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: 0 6px 6px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+        }
+        th {
+            background: #1e40af;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background: #f1f5f9;
+        }
+        ol li, ul li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Documentation Navigator - User Guide</h1>
+
+<p>The <strong>Documentation Navigator</strong> is a Streamlit app that provides an interactive browser for all folders and files in the workspace's <code>Documentation</code> directory. It lets you quickly find and read documentation without leaving the Snowsight environment.</p>
+
+<h2>Prerequisites</h2>
+
+<ul>
+    <li>Access to a Snowflake Workspace that contains this project.</li>
+    <li>The <code>Documentation</code> folder must exist as a sibling directory at the workspace root (alongside the <code>doc-navigator</code> app folder).</li>
+    <li>A running compute pool (<code>SYSTEM_COMPUTE_POOL_CPU</code>) and query warehouse (<code>COMPUTE_WH</code>) assigned to your account.</li>
+</ul>
+
+<h2>How to Launch the App</h2>
+
+<ol>
+    <li>Open your Snowflake Workspace in Snowsight.</li>
+    <li>Navigate to the <code>doc-navigator</code> folder in the file explorer.</li>
+    <li>Open <code>streamlit_app.py</code>.</li>
+    <li>Click the <strong>Run</strong> button in the top-right corner of the editor.</li>
+    <li>The app will start and display in the preview pane.</li>
+</ol>
+
+<div class="note">
+    <strong>Note:</strong> If this is the first time running the app, the compute pool may take a moment to resume. Subsequent launches will be faster.
+</div>
+
+<h2>Using the App</h2>
+
+<p>The interface is divided into two panels:</p>
+
+<h3>Left Panel - Navigation</h3>
+
+<ul>
+    <li>Folders appear as expandable sections (click to expand/collapse).</li>
+    <li>Each file is shown as a button with an icon indicating its type.</li>
+    <li>Click any file button to load its contents in the right panel.</li>
+</ul>
+
+<h3>Right Panel - Content Viewer</h3>
+
+<p>When you select a file, its contents are rendered based on the file type:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>File Type</th>
+            <th>Icon</th>
+            <th>How It Renders</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Markdown (.md)</td>
+            <td>&#x1F4DD;</td>
+            <td>Formatted rich text with headers, lists, and links</td>
+        </tr>
+        <tr>
+            <td>HTML (.html)</td>
+            <td>&#x1F310;</td>
+            <td>Rendered HTML in a scrollable embedded frame</td>
+        </tr>
+        <tr>
+            <td>Notebook (.ipynb)</td>
+            <td>&#x1F4D3;</td>
+            <td>Raw JSON source displayed in a code block</td>
+        </tr>
+        <tr>
+            <td>Python (.py)</td>
+            <td>&#x1F40D;</td>
+            <td>Syntax-highlighted Python code</td>
+        </tr>
+        <tr>
+            <td>SQL (.sql)</td>
+            <td>&#x1F5C3;&#xFE0F;</td>
+            <td>Syntax-highlighted SQL code</td>
+        </tr>
+        <tr>
+            <td>Other</td>
+            <td>&#x1F4C4;</td>
+            <td>Plain text in a code block</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Current Documentation Structure</h2>
+
+<p>The app automatically discovers the following folders and their contents:</p>
+
+<pre><code>Documentation/
+&#x251C;&#x2500;&#x2500; Agents/
+&#x2502;   &#x251C;&#x2500;&#x2500; Analyst_Guide_Using_Agents.html
+&#x2502;   &#x251C;&#x2500;&#x2500; Analyst_Guide_Using_Agents.md
+&#x2502;   &#x251C;&#x2500;&#x2500; Executive_Summary_Reliable_Agents.html
+&#x2502;   &#x251C;&#x2500;&#x2500; Executive_Summary_Reliable_Agents.md
+&#x2502;   &#x2514;&#x2500;&#x2500; Healthcare_Agent_Creation.ipynb
+&#x251C;&#x2500;&#x2500; Healthcare Data Guide/
+&#x2502;   &#x251C;&#x2500;&#x2500; healthcare_data_guide.html
+&#x2502;   &#x251C;&#x2500;&#x2500; healthcare_data_guide.ipynb
+&#x2502;   &#x2514;&#x2500;&#x2500; healthcare_data_guide.md
+&#x251C;&#x2500;&#x2500; Public Data Guide/
+&#x2502;   &#x251C;&#x2500;&#x2500; Snowflake_Public_Data_Free_Explorer.ipynb
+&#x2502;   &#x251C;&#x2500;&#x2500; Snowflake_Public_Data_Free_Guide.md
+&#x2502;   &#x2514;&#x2500;&#x2500; Snowflake_Public_Data_Free_Interactive.html
+&#x2514;&#x2500;&#x2500; Semantic Views/
+    &#x251C;&#x2500;&#x2500; Healthcare_Semantic_Views_Documentation.ipynb
+    &#x251C;&#x2500;&#x2500; Patient_Demographics_Semantic_View.ipynb
+    &#x2514;&#x2500;&#x2500; Semantic_Views_Guide_for_SQL_Analysts.html</code></pre>
+
+<h2>Adding New Documentation</h2>
+
+<p>The app dynamically reads the <code>Documentation</code> folder each time it loads. To add new content:</p>
+
+<ol>
+    <li>Place new files or folders inside the <code>Documentation</code> directory at the workspace root.</li>
+    <li>Supported formats: <code>.md</code>, <code>.html</code>, <code>.ipynb</code>, <code>.py</code>, <code>.sql</code>, or any text-based file.</li>
+    <li>The app will automatically pick them up on the next interaction (no code changes needed).</li>
+</ol>
+
+<div class="warning">
+    <strong>Important:</strong> The navigator reads one level of subfolders. If you create nested subfolders (e.g., <code>Documentation/Agents/Advanced/</code>), only files directly inside <code>Agents/</code> will appear. Move files up or create a new top-level folder instead.
+</div>
+
+<h2>Troubleshooting</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Issue</th>
+            <th>Solution</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>"No Documentation folder found"</td>
+            <td>Ensure the <code>Documentation</code> folder exists at the workspace root as a sibling to <code>doc-navigator</code>.</td>
+        </tr>
+        <tr>
+            <td>App fails to start</td>
+            <td>Verify the compute pool is active and your role has USAGE on both the warehouse and compute pool.</td>
+        </tr>
+        <tr>
+            <td>File content does not display</td>
+            <td>Check that the file is text-based and UTF-8 encoded. Binary files are not supported.</td>
+        </tr>
+        <tr>
+            <td>Changes not appearing</td>
+            <td>Click <strong>Run</strong> again after modifying <code>snowflake.yml</code> or <code>pyproject.toml</code>. For documentation file changes, simply interact with the app (click a different file and back).</td>
+        </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

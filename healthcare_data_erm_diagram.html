@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERM - SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: #e0e0e0; overflow: hidden; }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+        #canvas-container:active { cursor: grabbing; }
+        
+        #canvas {
+            position: absolute;
+            top: 0; left: 0;
+            transform-origin: 0 0;
+        }
+
+        .entity {
+            position: absolute;
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            min-width: 220px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: move;
+            user-select: none;
+            transition: box-shadow 0.2s;
+        }
+        .entity:hover { box-shadow: 0 6px 25px rgba(83, 146, 255, 0.3); }
+        .entity.selected { border-color: #5392ff; box-shadow: 0 6px 25px rgba(83, 146, 255, 0.5); }
+
+        .entity-header {
+            background: linear-gradient(135deg, #0f3460, #1a5276);
+            padding: 10px 14px;
+            border-radius: 6px 6px 0 0;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            color: #7ec8e3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .entity-header .row-count {
+            font-size: 10px;
+            color: #a0a0a0;
+            font-weight: 400;
+        }
+
+        .entity-columns {
+            padding: 6px 0;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .entity-columns::-webkit-scrollbar { width: 4px; }
+        .entity-columns::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        .column-row {
+            padding: 4px 14px;
+            font-size: 11.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid #0d1b2a;
+        }
+        .column-row:last-child { border-bottom: none; }
+        .column-row:hover { background: #1a3a5c; }
+
+        .col-icon {
+            width: 16px; height: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; font-weight: 700;
+            border-radius: 3px; flex-shrink: 0;
+        }
+        .col-icon.pk { background: #f39c12; color: #000; }
+        .col-icon.fk { background: #27ae60; color: #fff; }
+        .col-icon.reg { background: #34495e; color: #95a5a6; }
+
+        .col-name { flex: 1; color: #ccc; }
+        .col-name.pk-name { color: #f39c12; font-weight: 600; }
+        .col-name.fk-name { color: #2ecc71; }
+        .col-type { color: #7f8c8d; font-size: 10px; }
+
+        svg#relationships {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: visible;
+        }
+        svg#relationships path {
+            fill: none;
+            stroke: #3498db;
+            stroke-width: 1.5;
+            opacity: 0.5;
+            transition: opacity 0.2s, stroke-width 0.2s;
+        }
+        svg#relationships path.highlighted {
+            opacity: 1;
+            stroke-width: 2.5;
+            stroke: #5dade2;
+        }
+        svg#relationships circle {
+            transition: opacity 0.2s;
+        }
+
+        #controls {
+            position: fixed;
+            top: 16px; right: 16px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        #controls button {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            color: #7ec8e3;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        #controls button:hover { background: #1a3a5c; }
+
+        #title-bar {
+            position: fixed;
+            top: 16px; left: 16px;
+            z-index: 1000;
+            background: rgba(22, 33, 62, 0.95);
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            padding: 12px 18px;
+        }
+        #title-bar h1 { font-size: 14px; color: #7ec8e3; margin-bottom: 4px; }
+        #title-bar p { font-size: 11px; color: #7f8c8d; }
+
+        #legend {
+            position: fixed;
+            bottom: 16px; left: 16px;
+            z-index: 1000;
+            background: rgba(22, 33, 62, 0.95);
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-size: 11px;
+        }
+        #legend h3 { color: #7ec8e3; margin-bottom: 8px; font-size: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .legend-swatch { width: 14px; height: 14px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+
+        #search-box {
+            position: fixed;
+            top: 16px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        #search-box input {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            color: #e0e0e0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            width: 280px;
+            font-size: 12px;
+            outline: none;
+        }
+        #search-box input:focus { border-color: #5392ff; }
+        #search-box input::placeholder { color: #555; }
+
+        .minimap {
+            position: fixed;
+            bottom: 16px; right: 16px;
+            width: 200px; height: 140px;
+            background: rgba(22, 33, 62, 0.9);
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        .minimap-viewport {
+            position: absolute;
+            border: 1px solid #5392ff;
+            background: rgba(83, 146, 255, 0.1);
+        }
+        .minimap-entity {
+            position: absolute;
+            background: #3498db;
+            border-radius: 1px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div id="title-bar">
+        <h1>SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER</h1>
+        <p>18 Tables &bull; Entity Relationship Model &bull; Drag to pan, scroll to zoom</p>
+    </div>
+
+    <div id="search-box">
+        <input type="text" id="search" placeholder="Search tables or columns..." />
+    </div>
+
+    <div id="controls">
+        <button onclick="zoomIn()">+ Zoom In</button>
+        <button onclick="zoomOut()">- Zoom Out</button>
+        <button onclick="resetView()">Reset View</button>
+        <button onclick="fitAll()">Fit All</button>
+        <button onclick="toggleRelationships()">Toggle Lines</button>
+    </div>
+
+    <div id="legend">
+        <h3>Legend</h3>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f39c12;color:#000;">PK</div><span>Primary Key</span></div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#27ae60;color:#fff;">FK</div><span>Foreign Key</span></div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#34495e;color:#95a5a6;">&bull;</div><span>Regular Column</span></div>
+        <div class="legend-item"><div style="width:30px;height:2px;background:#3498db;border-radius:1px;"></div><span>Relationship</span></div>
+    </div>
+
+    <div class="minimap" id="minimap"></div>
+
+    <div id="canvas-container">
+        <div id="canvas">
+            <svg id="relationships"></svg>
+        </div>
+    </div>
+
+    <script>
+    const schema = {
+        tables: [
+            {
+                name: "PATIENTS",
+                rows: "1.4M",
+                columns: [
+                    {name:"PATIENT_ID", type:"NUMBER", pk:true},
+                    {name:"BIRTHDATE", type:"DATE"},
+                    {name:"DEATHDATE", type:"DATE"},
+                    {name:"SSN", type:"TEXT"},
+                    {name:"DRIVERS", type:"TEXT"},
+                    {name:"PASSPORT", type:"TEXT"},
+                    {name:"PREFIX", type:"TEXT"},
+                    {name:"FIRST", type:"TEXT"},
+                    {name:"MIDDLE", type:"TEXT"},
+                    {name:"LAST", type:"TEXT"},
+                    {name:"SUFFIX", type:"TEXT"},
+                    {name:"MAIDEN", type:"TEXT"},
+                    {name:"MARITAL", type:"TEXT"},
+                    {name:"RACE", type:"TEXT"},
+                    {name:"ETHNICITY", type:"TEXT"},
+                    {name:"GENDER", type:"TEXT"},
+                    {name:"BIRTHPLACE", type:"TEXT"},
+                    {name:"ADDRESS", type:"TEXT"},
+                    {name:"CITY", type:"TEXT"},
+                    {name:"STATE", type:"TEXT"},
+                    {name:"COUNTY", type:"TEXT"},
+                    {name:"FIPS", type:"NUMBER"},
+                    {name:"ZIP", type:"NUMBER"},
+                    {name:"LAT", type:"NUMBER"},
+                    {name:"LON", type:"NUMBER"},
+                    {name:"HEALTHCARE_EXPENSES", type:"NUMBER"},
+                    {name:"HEALTHCARE_COVERAGE", type:"NUMBER"},
+                    {name:"INCOME", type:"NUMBER"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "ENCOUNTERS",
+                rows: "64.5M",
+                columns: [
+                    {name:"ENCOUNTER_ID", type:"NUMBER", pk:true},
+                    {name:"ENCOUNTER_START", type:"TIMESTAMP"},
+                    {name:"ENCOUNTER_STOP", type:"TIMESTAMP"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ORGANIZATION_ID", type:"NUMBER", fk:"ORGANIZATIONS"},
+                    {name:"PROVIDER_ID", type:"NUMBER", fk:"PROVIDERS"},
+                    {name:"PAYER_ID", type:"NUMBER", fk:"PAYERS"},
+                    {name:"ENCOUNTERCLASS", type:"TEXT"},
+                    {name:"CODE", type:"NUMBER"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"BASE_ENCOUNTER_COST", type:"NUMBER"},
+                    {name:"TOTAL_CLAIM_COST", type:"NUMBER"},
+                    {name:"PAYER_COVERAGE", type:"NUMBER"},
+                    {name:"REASONCODE", type:"NUMBER"},
+                    {name:"REASONDESCRIPTION", type:"TEXT"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "PROVIDERS",
+                rows: "4K",
+                columns: [
+                    {name:"PROVIDER_ID", type:"NUMBER", pk:true},
+                    {name:"ORGANIZATION_ID", type:"NUMBER", fk:"ORGANIZATIONS"},
+                    {name:"NAME", type:"TEXT"},
+                    {name:"GENDER", type:"TEXT"},
+                    {name:"SPECIALITY", type:"TEXT"},
+                    {name:"ADDRESS", type:"TEXT"},
+                    {name:"CITY", type:"TEXT"},
+                    {name:"STATE", type:"TEXT"},
+                    {name:"ZIP", type:"NUMBER"},
+                    {name:"LAT", type:"NUMBER"},
+                    {name:"LON", type:"NUMBER"},
+                    {name:"ENCOUNTERS", type:"NUMBER"},
+                    {name:"PROCEDURES", type:"NUMBER"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "ORGANIZATIONS",
+                rows: "4K",
+                columns: [
+                    {name:"ORGANIZATION_ID", type:"NUMBER", pk:true},
+                    {name:"NAME", type:"TEXT"},
+                    {name:"ADDRESS", type:"TEXT"},
+                    {name:"CITY", type:"TEXT"},
+                    {name:"STATE", type:"TEXT"},
+                    {name:"ZIP", type:"NUMBER"},
+                    {name:"LAT", type:"NUMBER"},
+                    {name:"LON", type:"NUMBER"},
+                    {name:"PHONE", type:"TEXT"},
+                    {name:"REVENUE", type:"NUMBER"},
+                    {name:"UTILIZATION", type:"NUMBER"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "PAYERS",
+                rows: "120",
+                columns: [
+                    {name:"PAYER_ID", type:"NUMBER", pk:true},
+                    {name:"NAME", type:"TEXT"},
+                    {name:"ADDRESS", type:"TEXT"},
+                    {name:"CITY", type:"TEXT"},
+                    {name:"STATE_HEADQUARTERED", type:"TEXT"},
+                    {name:"ZIP", type:"TEXT"},
+                    {name:"PHONE", type:"TEXT"},
+                    {name:"AMOUNT_COVERED", type:"NUMBER"},
+                    {name:"AMOUNT_UNCOVERED", type:"NUMBER"},
+                    {name:"REVENUE", type:"NUMBER"},
+                    {name:"COVERED_ENCOUNTERS", type:"NUMBER"},
+                    {name:"UNCOVERED_ENCOUNTERS", type:"NUMBER"},
+                    {name:"COVERED_MEDICATIONS", type:"NUMBER"},
+                    {name:"UNCOVERED_MEDICATIONS", type:"NUMBER"},
+                    {name:"COVERED_PROCEDURES", type:"NUMBER"},
+                    {name:"UNCOVERED_PROCEDURES", type:"NUMBER"},
+                    {name:"COVERED_IMMUNIZATIONS", type:"NUMBER"},
+                    {name:"UNCOVERED_IMMUNIZATIONS", type:"NUMBER"},
+                    {name:"UNIQUE_CUSTOMERS", type:"NUMBER"},
+                    {name:"QOLS_AVG", type:"NUMBER"},
+                    {name:"MEMBER_MONTHS", type:"NUMBER"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "CLAIMS",
+                rows: "124.1M",
+                columns: [
+                    {name:"CLAIM_ID", type:"NUMBER", pk:true},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"PROVIDER_ID", type:"NUMBER", fk:"PROVIDERS"},
+                    {name:"PRIMARY_PATIENT_INSURANCE_ID", type:"NUMBER"},
+                    {name:"SECONDARY_PATIENT_INSURANCE_ID", type:"NUMBER"},
+                    {name:"DEPARTMENTID", type:"NUMBER"},
+                    {name:"PATIENTDEPARTMENTID", type:"NUMBER"},
+                    {name:"DIAGNOSIS1", type:"NUMBER"},
+                    {name:"DIAGNOSIS2", type:"NUMBER"},
+                    {name:"DIAGNOSIS3", type:"NUMBER"},
+                    {name:"DIAGNOSIS4", type:"NUMBER"},
+                    {name:"DIAGNOSIS5", type:"NUMBER"},
+                    {name:"DIAGNOSIS6", type:"NUMBER"},
+                    {name:"DIAGNOSIS7", type:"NUMBER"},
+                    {name:"DIAGNOSIS8", type:"NUMBER"},
+                    {name:"REFERRING_PROVIDER_ID", type:"NUMBER", fk:"PROVIDERS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"CURRENTILLNESSDATE", type:"TIMESTAMP"},
+                    {name:"SERVICEDATE", type:"TIMESTAMP"},
+                    {name:"SUPERVISING_PROVIDER_ID", type:"NUMBER", fk:"PROVIDERS"},
+                    {name:"STATUS1", type:"TEXT"},
+                    {name:"STATUS2", type:"TEXT"},
+                    {name:"STATUSP", type:"TEXT"},
+                    {name:"OUTSTANDING1", type:"NUMBER"},
+                    {name:"OUTSTANDING2", type:"NUMBER"},
+                    {name:"OUTSTANDINGP", type:"NUMBER"},
+                    {name:"LASTBILLEDDATE1", type:"TIMESTAMP"},
+                    {name:"LASTBILLEDDATE2", type:"TIMESTAMP"},
+                    {name:"LASTBILLEDDATEP", type:"TIMESTAMP"},
+                    {name:"HEALTHCARECLAIMTYPEID1", type:"NUMBER"},
+                    {name:"HEALTHCARECLAIMTYPEID2", type:"NUMBER"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "CLAIMS_TX",
+                rows: "887M",
+                columns: [
+                    {name:"CLAIMS_TX_ID", type:"NUMBER", pk:true},
+                    {name:"CLAIM_ID", type:"NUMBER", fk:"CLAIMS"},
+                    {name:"CHARGEID", type:"NUMBER"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"TYPE", type:"TEXT"},
+                    {name:"AMOUNT", type:"NUMBER"},
+                    {name:"METHOD", type:"TEXT"},
+                    {name:"FROMDATE", type:"TIMESTAMP"},
+                    {name:"TODATE", type:"TIMESTAMP"},
+                    {name:"PLACE_OF_SERVICE_ID", type:"NUMBER"},
+                    {name:"PROCEDURECODE", type:"NUMBER"},
+                    {name:"MODIFIER1", type:"TEXT"},
+                    {name:"MODIFIER2", type:"TEXT"},
+                    {name:"DIAGNOSISREF1", type:"NUMBER"},
+                    {name:"DIAGNOSISREF2", type:"NUMBER"},
+                    {name:"DIAGNOSISREF3", type:"NUMBER"},
+                    {name:"DIAGNOSISREF4", type:"NUMBER"},
+                    {name:"UNITS", type:"NUMBER"},
+                    {name:"DEPARTMENTID", type:"NUMBER"},
+                    {name:"NOTES", type:"TEXT"},
+                    {name:"UNITAMOUNT", type:"NUMBER"},
+                    {name:"TRANSFEROUTID", type:"NUMBER"},
+                    {name:"TRANSFERTYPE", type:"TEXT"},
+                    {name:"PAYMENTS", type:"NUMBER"},
+                    {name:"ADJUSTMENTS", type:"NUMBER"},
+                    {name:"TRANSFERS", type:"NUMBER"},
+                    {name:"OUTSTANDING", type:"NUMBER"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"LINENOTE", type:"TEXT"},
+                    {name:"FEESCHEDULEID", type:"NUMBER"},
+                    {name:"PROVIDER_ID", type:"NUMBER", fk:"PROVIDERS"},
+                    {name:"SUPERVISING_PROVIDER_ID", type:"NUMBER", fk:"PROVIDERS"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "CONDITIONS",
+                rows: "38.5M",
+                columns: [
+                    {name:"CONDITION_ID", type:"NUMBER", pk:true},
+                    {name:"CONDITION_START", type:"DATE"},
+                    {name:"CONDITION_STOP", type:"DATE"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"SYSTEM", type:"TEXT"},
+                    {name:"CODE", type:"NUMBER"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "ALLERGIES",
+                rows: "1.3M",
+                columns: [
+                    {name:"ALLERGY_ID", type:"NUMBER", pk:true},
+                    {name:"ALLERGY_START", type:"DATE"},
+                    {name:"ALLERGY_STOP", type:"DATE"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"CODE", type:"NUMBER"},
+                    {name:"SYSTEM", type:"TEXT"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"TYPE", type:"TEXT"},
+                    {name:"CATEGORY", type:"TEXT"},
+                    {name:"REACTION1", type:"NUMBER"},
+                    {name:"DESCRIPTION1", type:"TEXT"},
+                    {name:"SEVERITY1", type:"TEXT"},
+                    {name:"REACTION2", type:"NUMBER"},
+                    {name:"DESCRIPTION2", type:"TEXT"},
+                    {name:"SEVERITY2", type:"TEXT"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "CARE_PLANS",
+                rows: "4M",
+                columns: [
+                    {name:"CARE_PLAN_ID", type:"NUMBER", pk:true},
+                    {name:"CAREPLAN_START", type:"DATE"},
+                    {name:"CAREPLAN_STOP", type:"DATE"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"CODE", type:"NUMBER"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"REASONCODE", type:"NUMBER"},
+                    {name:"REASONDESCRIPTION", type:"TEXT"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "DEVICES",
+                rows: "5.7M",
+                columns: [
+                    {name:"DEVICE_ID", type:"NUMBER", pk:true},
+                    {name:"DEVICE_START", type:"TIMESTAMP"},
+                    {name:"DEVICE_STOP", type:"TIMESTAMP"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"CODE", type:"NUMBER"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"UDI", type:"TEXT"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "IMAGING_STUDIES",
+                rows: "117.9M",
+                columns: [
+                    {name:"IMAGING_ID", type:"NUMBER", pk:true},
+                    {name:"ID", type:"TEXT"},
+                    {name:"IMAGE_DATE", type:"TIMESTAMP"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"SERIES_UID", type:"TEXT"},
+                    {name:"BODYSITE_CODE", type:"NUMBER"},
+                    {name:"BODYSITE_DESCRIPTION", type:"TEXT"},
+                    {name:"MODALITY_CODE", type:"TEXT"},
+                    {name:"MODALITY_DESCRIPTION", type:"TEXT"},
+                    {name:"INSTANCE_UID", type:"TEXT"},
+                    {name:"SOP_CODE", type:"TEXT"},
+                    {name:"SOP_DESCRIPTION", type:"TEXT"},
+                    {name:"PROCEDURE_CODE", type:"NUMBER"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "IMMUNIZATIONS",
+                rows: "11.5M",
+                columns: [
+                    {name:"IMMUNIZATION_ID", type:"NUMBER", pk:true},
+                    {name:"IMMUNIZATION_DATE", type:"TIMESTAMP"},
+                    {name:"PATIENT", type:"TEXT"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ENCOUNTER", type:"TEXT"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"CODE", type:"NUMBER"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"BASE_COST", type:"NUMBER"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "MEDICATIONS",
+                rows: "59.6M",
+                columns: [
+                    {name:"MEDICATION_ID", type:"NUMBER", pk:true},
+                    {name:"MED_START", type:"TIMESTAMP"},
+                    {name:"MED_STOP", type:"TIMESTAMP"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"PAYER_ID", type:"NUMBER", fk:"PAYERS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"CODE", type:"NUMBER"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"BASE_COST", type:"NUMBER"},
+                    {name:"PAYER_COVERAGE", type:"NUMBER"},
+                    {name:"DISPENSES", type:"NUMBER"},
+                    {name:"TOTALCOST", type:"NUMBER"},
+                    {name:"REASONCODE", type:"NUMBER"},
+                    {name:"REASONDESCRIPTION", type:"TEXT"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "OBSERVATIONS",
+                rows: "763.4M",
+                columns: [
+                    {name:"OBSERVATION_ID", type:"NUMBER", pk:true},
+                    {name:"OBSERVATION_DATE", type:"TIMESTAMP"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"CATEGORY", type:"TEXT"},
+                    {name:"CODE", type:"TEXT"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"VALUE", type:"TEXT"},
+                    {name:"UNITS", type:"TEXT"},
+                    {name:"TYPE", type:"TEXT"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "PROCEDURES",
+                rows: "148.5M",
+                columns: [
+                    {name:"PROCEDURE_ID", type:"NUMBER", pk:true},
+                    {name:"PROC_START", type:"TIMESTAMP"},
+                    {name:"PROC_STOP", type:"TIMESTAMP"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"CODE", type:"NUMBER"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"BASE_COST", type:"NUMBER"},
+                    {name:"REASONCODE", type:"NUMBER"},
+                    {name:"REASONDESCRIPTION", type:"TEXT"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "PAYER_TRANSITIONS",
+                rows: "6.1M",
+                columns: [
+                    {name:"PAYER_TRANSITIONS_ID", type:"NUMBER", pk:true},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"MEMBER_ID", type:"TEXT"},
+                    {name:"START_YEAR", type:"TIMESTAMP"},
+                    {name:"END_YEAR", type:"TIMESTAMP"},
+                    {name:"PAYER_ID", type:"NUMBER", fk:"PAYERS"},
+                    {name:"SECONDARY_PAYER_ID", type:"NUMBER", fk:"PAYERS"},
+                    {name:"OWNERSHIP_TYPE", type:"TEXT"},
+                    {name:"OWNER_NAME", type:"TEXT"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            },
+            {
+                name: "SUPPLIES",
+                rows: "25.2M",
+                columns: [
+                    {name:"SUPPLY_ID", type:"NUMBER", pk:true},
+                    {name:"SUPPLY_DATE", type:"DATE"},
+                    {name:"PATIENT_ID", type:"NUMBER", fk:"PATIENTS"},
+                    {name:"ENCOUNTER_ID", type:"NUMBER", fk:"ENCOUNTERS"},
+                    {name:"CODE", type:"NUMBER"},
+                    {name:"DESCRIPTION", type:"TEXT"},
+                    {name:"QUANTITY", type:"NUMBER"},
+                    {name:"SYNTHEA_CITY", type:"TEXT"}
+                ]
+            }
+        ],
+        relationships: [
+            {from:"ENCOUNTERS", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"ENCOUNTERS", fromCol:"ORGANIZATION_ID", to:"ORGANIZATIONS", toCol:"ORGANIZATION_ID", label:"N:1"},
+            {from:"ENCOUNTERS", fromCol:"PROVIDER_ID", to:"PROVIDERS", toCol:"PROVIDER_ID", label:"N:1"},
+            {from:"ENCOUNTERS", fromCol:"PAYER_ID", to:"PAYERS", toCol:"PAYER_ID", label:"N:1"},
+            {from:"PROVIDERS", fromCol:"ORGANIZATION_ID", to:"ORGANIZATIONS", toCol:"ORGANIZATION_ID", label:"N:1"},
+            {from:"CLAIMS", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"CLAIMS", fromCol:"PROVIDER_ID", to:"PROVIDERS", toCol:"PROVIDER_ID", label:"N:1"},
+            {from:"CLAIMS", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"CLAIMS_TX", fromCol:"CLAIM_ID", to:"CLAIMS", toCol:"CLAIM_ID", label:"N:1"},
+            {from:"CLAIMS_TX", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"CLAIMS_TX", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"CLAIMS_TX", fromCol:"PROVIDER_ID", to:"PROVIDERS", toCol:"PROVIDER_ID", label:"N:1"},
+            {from:"CONDITIONS", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"CONDITIONS", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"ALLERGIES", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"ALLERGIES", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"CARE_PLANS", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"CARE_PLANS", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"DEVICES", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"DEVICES", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"IMAGING_STUDIES", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"IMAGING_STUDIES", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"IMMUNIZATIONS", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"IMMUNIZATIONS", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"MEDICATIONS", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"MEDICATIONS", fromCol:"PAYER_ID", to:"PAYERS", toCol:"PAYER_ID", label:"N:1"},
+            {from:"MEDICATIONS", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"OBSERVATIONS", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"OBSERVATIONS", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"PROCEDURES", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"PROCEDURES", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"},
+            {from:"PAYER_TRANSITIONS", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"PAYER_TRANSITIONS", fromCol:"PAYER_ID", to:"PAYERS", toCol:"PAYER_ID", label:"N:1"},
+            {from:"SUPPLIES", fromCol:"PATIENT_ID", to:"PATIENTS", toCol:"PATIENT_ID", label:"N:1"},
+            {from:"SUPPLIES", fromCol:"ENCOUNTER_ID", to:"ENCOUNTERS", toCol:"ENCOUNTER_ID", label:"N:1"}
+        ]
+    };
+
+    // Layout positions - arranged logically
+    const positions = {
+        "PATIENTS": {x: 600, y: 50},
+        "ENCOUNTERS": {x: 600, y: 450},
+        "ORGANIZATIONS": {x: 1050, y: 200},
+        "PROVIDERS": {x: 1050, y: 500},
+        "PAYERS": {x: 150, y: 200},
+        "CLAIMS": {x: 1050, y: 800},
+        "CLAIMS_TX": {x: 1400, y: 800},
+        "CONDITIONS": {x: 200, y: 700},
+        "ALLERGIES": {x: 200, y: 1000},
+        "CARE_PLANS": {x: 450, y: 900},
+        "DEVICES": {x: 700, y: 900},
+        "IMAGING_STUDIES": {x: 950, y: 1100},
+        "IMMUNIZATIONS": {x: 200, y: 1300},
+        "MEDICATIONS": {x: 450, y: 1200},
+        "OBSERVATIONS": {x: 700, y: 1200},
+        "PROCEDURES": {x: 1200, y: 1100},
+        "PAYER_TRANSITIONS": {x: 50, y: 500},
+        "SUPPLIES": {x: 950, y: 1400}
+    };
+
+    // State
+    let scale = 0.7;
+    let panX = 100, panY = 50;
+    let isDragging = false;
+    let isPanning = false;
+    let dragTarget = null;
+    let dragOffsetX = 0, dragOffsetY = 0;
+    let startPanX, startPanY, startMouseX, startMouseY;
+    let showRelationships = true;
+    let selectedTable = null;
+
+    const canvas = document.getElementById('canvas');
+    const container = document.getElementById('canvas-container');
+    const svg = document.getElementById('relationships');
+
+    function init() {
+        createEntities();
+        drawRelationships();
+        updateTransform();
+        updateMinimap();
+    }
+
+    function createEntities() {
+        schema.tables.forEach(table => {
+            const el = document.createElement('div');
+            el.className = 'entity';
+            el.id = `entity-${table.name}`;
+            el.style.left = positions[table.name].x + 'px';
+            el.style.top = positions[table.name].y + 'px';
+
+            let columnsHtml = '';
+            table.columns.forEach(col => {
+                let iconClass = 'reg';
+                let nameClass = '';
+                let iconText = '&bull;';
+                if (col.pk) { iconClass = 'pk'; nameClass = 'pk-name'; iconText = 'PK'; }
+                else if (col.fk) { iconClass = 'fk'; nameClass = 'fk-name'; iconText = 'FK'; }
+                columnsHtml += `<div class="column-row" data-col="${col.name}" data-fk="${col.fk || ''}">
+                    <div class="col-icon ${iconClass}">${iconText}</div>
+                    <span class="col-name ${nameClass}">${col.name}</span>
+                    <span class="col-type">${col.type}</span>
+                </div>`;
+            });
+
+            el.innerHTML = `
+                <div class="entity-header">
+                    <span>${table.name}</span>
+                    <span class="row-count">${table.rows} rows</span>
+                </div>
+                <div class="entity-columns">${columnsHtml}</div>
+            `;
+
+            el.addEventListener('mousedown', onEntityMouseDown);
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectTable(table.name);
+            });
+            canvas.appendChild(el);
+        });
+    }
+
+    function selectTable(name) {
+        document.querySelectorAll('.entity').forEach(e => e.classList.remove('selected'));
+        if (selectedTable === name) {
+            selectedTable = null;
+            highlightRelationships(null);
+            return;
+        }
+        selectedTable = name;
+        document.getElementById(`entity-${name}`).classList.add('selected');
+        highlightRelationships(name);
+    }
+
+    function highlightRelationships(tableName) {
+        const paths = svg.querySelectorAll('path');
+        const circles = svg.querySelectorAll('circle');
+        if (!tableName) {
+            paths.forEach(p => p.classList.remove('highlighted'));
+            circles.forEach(c => c.style.opacity = '0.5');
+            return;
+        }
+        paths.forEach(p => {
+            if (p.dataset.from === tableName || p.dataset.to === tableName) {
+                p.classList.add('highlighted');
+            } else {
+                p.classList.remove('highlighted');
+            }
+        });
+        circles.forEach(c => {
+            if (c.dataset.table === tableName) {
+                c.style.opacity = '1';
+            } else {
+                c.style.opacity = '0.3';
+            }
+        });
+    }
+
+    function getEntityCenter(name) {
+        const el = document.getElementById(`entity-${name}`);
+        if (!el) return {x: 0, y: 0};
+        const x = parseInt(el.style.left) + el.offsetWidth / 2;
+        const y = parseInt(el.style.top) + el.offsetHeight / 2;
+        return {x, y};
+    }
+
+    function getEntityPort(fromName, toName) {
+        const fromEl = document.getElementById(`entity-${fromName}`);
+        const toEl = document.getElementById(`entity-${toName}`);
+        if (!fromEl || !toEl) return {fx:0, fy:0, tx:0, ty:0};
+
+        const fx = parseInt(fromEl.style.left);
+        const fy = parseInt(fromEl.style.top);
+        const fw = fromEl.offsetWidth;
+        const fh = fromEl.offsetHeight;
+
+        const tx = parseInt(toEl.style.left);
+        const ty = parseInt(toEl.style.top);
+        const tw = toEl.offsetWidth;
+        const th = toEl.offsetHeight;
+
+        const fcx = fx + fw/2, fcy = fy + fh/2;
+        const tcx = tx + tw/2, tcy = ty + th/2;
+
+        let fromPort = {x: fcx, y: fcy};
+        let toPort = {x: tcx, y: tcy};
+
+        // Determine best side for connection
+        const dx = tcx - fcx;
+        const dy = tcy - fcy;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            if (dx > 0) {
+                fromPort = {x: fx + fw, y: fcy};
+                toPort = {x: tx, y: tcy};
+            } else {
+                fromPort = {x: fx, y: fcy};
+                toPort = {x: tx + tw, y: tcy};
+            }
+        } else {
+            if (dy > 0) {
+                fromPort = {x: fcx, y: fy + fh};
+                toPort = {x: tcx, y: ty};
+            } else {
+                fromPort = {x: fcx, y: fy};
+                toPort = {x: tcx, y: ty + th};
+            }
+        }
+
+        return {fx: fromPort.x, fy: fromPort.y, tx: toPort.x, ty: toPort.y};
+    }
+
+    function drawRelationships() {
+        svg.innerHTML = '';
+        if (!showRelationships) return;
+
+        schema.relationships.forEach(rel => {
+            const ports = getEntityPort(rel.from, rel.to);
+            const {fx, fy, tx, ty} = ports;
+
+            // Curved path
+            const mx = (fx + tx) / 2;
+            const my = (fy + ty) / 2;
+            const dx = tx - fx;
+            const dy = ty - fy;
+            const cx1 = fx + dx * 0.3;
+            const cy1 = fy;
+            const cx2 = tx - dx * 0.3;
+            const cy2 = ty;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', `M ${fx} ${fy} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${tx} ${ty}`);
+            path.dataset.from = rel.from;
+            path.dataset.to = rel.to;
+            svg.appendChild(path);
+
+            // Endpoint circles
+            const c1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            c1.setAttribute('cx', fx); c1.setAttribute('cy', fy); c1.setAttribute('r', 3);
+            c1.setAttribute('fill', '#3498db'); c1.style.opacity = '0.5'; c1.dataset.table = rel.from;
+            svg.appendChild(c1);
+
+            const c2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            c2.setAttribute('cx', tx); c2.setAttribute('cy', ty); c2.setAttribute('r', 5);
+            c2.setAttribute('fill', '#3498db'); c2.style.opacity = '0.5'; c2.dataset.table = rel.to;
+            svg.appendChild(c2);
+        });
+    }
+
+    function updateTransform() {
+        canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    }
+
+    // Pan & Zoom
+    container.addEventListener('mousedown', (e) => {
+        if (e.target === container || e.target === canvas || e.target === svg) {
+            isPanning = true;
+            startPanX = panX;
+            startPanY = panY;
+            startMouseX = e.clientX;
+            startMouseY = e.clientY;
+        }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isPanning) {
+            panX = startPanX + (e.clientX - startMouseX);
+            panY = startPanY + (e.clientY - startMouseY);
+            updateTransform();
+            updateMinimap();
+        }
+        if (isDragging && dragTarget) {
+            const x = (e.clientX - panX) / scale - dragOffsetX;
+            const y = (e.clientY - panY) / scale - dragOffsetY;
+            dragTarget.style.left = x + 'px';
+            dragTarget.style.top = y + 'px';
+            drawRelationships();
+            if (selectedTable) highlightRelationships(selectedTable);
+            updateMinimap();
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isPanning = false;
+        isDragging = false;
+        dragTarget = null;
+    });
+
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY > 0 ? 0.92 : 1.08;
+        const rect = container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const newScale = Math.min(Math.max(scale * zoomFactor, 0.2), 3);
+        panX = mouseX - (mouseX - panX) * (newScale / scale);
+        panY = mouseY - (mouseY - panY) * (newScale / scale);
+        scale = newScale;
+        updateTransform();
+        updateMinimap();
+    });
+
+    function onEntityMouseDown(e) {
+        if (e.target.closest('.entity-columns')) return;
+        const entity = e.target.closest('.entity');
+        if (!entity) return;
+        e.stopPropagation();
+        isDragging = true;
+        dragTarget = entity;
+        const x = (e.clientX - panX) / scale;
+        const y = (e.clientY - panY) / scale;
+        dragOffsetX = x - parseInt(entity.style.left);
+        dragOffsetY = y - parseInt(entity.style.top);
+    }
+
+    // Controls
+    function zoomIn() { scale = Math.min(scale * 1.2, 3); updateTransform(); updateMinimap(); }
+    function zoomOut() { scale = Math.max(scale * 0.8, 0.2); updateTransform(); updateMinimap(); }
+    function resetView() { scale = 0.7; panX = 100; panY = 50; updateTransform(); updateMinimap(); }
+
+    function fitAll() {
+        const entities = document.querySelectorAll('.entity');
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        entities.forEach(el => {
+            const x = parseInt(el.style.left);
+            const y = parseInt(el.style.top);
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x + el.offsetWidth);
+            maxY = Math.max(maxY, y + el.offsetHeight);
+        });
+        const contentW = maxX - minX + 100;
+        const contentH = maxY - minY + 100;
+        const viewW = container.clientWidth;
+        const viewH = container.clientHeight;
+        scale = Math.min(viewW / contentW, viewH / contentH, 1.5);
+        panX = (viewW - contentW * scale) / 2 - minX * scale + 50;
+        panY = (viewH - contentH * scale) / 2 - minY * scale + 50;
+        updateTransform();
+        updateMinimap();
+    }
+
+    function toggleRelationships() {
+        showRelationships = !showRelationships;
+        drawRelationships();
+        if (selectedTable) highlightRelationships(selectedTable);
+    }
+
+    // Search
+    document.getElementById('search').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.entity').forEach(el => {
+            const tableName = el.id.replace('entity-', '');
+            const cols = el.querySelectorAll('.column-row');
+            let match = tableName.toLowerCase().includes(query);
+            cols.forEach(col => {
+                if (col.dataset.col.toLowerCase().includes(query)) match = true;
+            });
+            el.style.opacity = query === '' || match ? '1' : '0.2';
+            el.style.transform = query !== '' && match ? 'scale(1.02)' : '';
+        });
+    });
+
+    // Click on background deselects
+    container.addEventListener('click', (e) => {
+        if (e.target === container || e.target === canvas || e.target === svg) {
+            selectedTable = null;
+            document.querySelectorAll('.entity').forEach(e => e.classList.remove('selected'));
+            highlightRelationships(null);
+        }
+    });
+
+    // Minimap
+    function updateMinimap() {
+        const minimap = document.getElementById('minimap');
+        const entities = document.querySelectorAll('.entity');
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        entities.forEach(el => {
+            const x = parseInt(el.style.left);
+            const y = parseInt(el.style.top);
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x + el.offsetWidth);
+            maxY = Math.max(maxY, y + el.offsetHeight);
+        });
+
+        const cw = maxX - minX + 200;
+        const ch = maxY - minY + 200;
+        const mw = 200, mh = 140;
+        const mScale = Math.min(mw / cw, mh / ch);
+
+        let html = '';
+        entities.forEach(el => {
+            const x = (parseInt(el.style.left) - minX + 100) * mScale;
+            const y = (parseInt(el.style.top) - minY + 100) * mScale;
+            const w = Math.max(el.offsetWidth * mScale, 4);
+            const h = Math.max(el.offsetHeight * mScale, 3);
+            html += `<div class="minimap-entity" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;"></div>`;
+        });
+
+        // Viewport indicator
+        const vx = (-panX / scale - minX + 100) * mScale;
+        const vy = (-panY / scale - minY + 100) * mScale;
+        const vw = (container.clientWidth / scale) * mScale;
+        const vh = (container.clientHeight / scale) * mScale;
+        html += `<div class="minimap-viewport" style="left:${vx}px;top:${vy}px;width:${vw}px;height:${vh}px;"></div>`;
+
+        minimap.innerHTML = html;
+    }
+
+    // Init
+    window.addEventListener('load', () => {
+        init();
+        setTimeout(fitAll, 100);
+    });
+    window.addEventListener('resize', () => { updateMinimap(); });
+    </script>
+</body>
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Data Guide — Interactive ERM</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.6; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        h1 { color: #38bdf8; margin-bottom: 8px; font-size: 2rem; }
+        h2 { color: #7dd3fc; margin: 30px 0 15px; font-size: 1.4rem; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        h3 { color: #a5f3fc; margin: 20px 0 10px; font-size: 1.1rem; }
+        .subtitle { color: #94a3b8; margin-bottom: 30px; }
+        .stats { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
+        .stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; flex: 1; min-width: 200px; text-align: center; }
+        .stat-card .number { font-size: 2rem; color: #38bdf8; font-weight: bold; }
+        .stat-card .label { color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+        .erm-container { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 30px; margin: 20px 0; overflow-x: auto; }
+        svg { width: 100%; height: auto; min-height: 700px; }
+        .table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 16px; margin: 20px 0; }
+        .table-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; }
+        .table-card:hover { border-color: #38bdf8; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(56, 189, 248, 0.1); }
+        .table-card.active { border-color: #38bdf8; background: #1e3a5f; }
+        .table-card .name { font-weight: bold; color: #f1f5f9; font-size: 1.1rem; }
+        .table-card .rows { color: #94a3b8; font-size: 0.85rem; }
+        .table-card .desc { color: #cbd5e1; margin-top: 8px; font-size: 0.9rem; }
+        .columns-panel { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin: 20px 0; display: none; }
+        .columns-panel.visible { display: block; }
+        .columns-panel h3 { margin-top: 0; }
+        .col-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .col-table th { text-align: left; color: #7dd3fc; padding: 8px 12px; border-bottom: 1px solid #334155; font-size: 0.85rem; text-transform: uppercase; }
+        .col-table td { padding: 8px 12px; border-bottom: 1px solid #1e293b; font-size: 0.9rem; }
+        .col-table tr:hover { background: #334155; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .badge-pk { background: #166534; color: #86efac; }
+        .badge-fk { background: #7c2d12; color: #fdba74; }
+        .badge-type { background: #1e3a5f; color: #7dd3fc; }
+        .tabs { display: flex; gap: 4px; margin: 20px 0; flex-wrap: wrap; }
+        .tab { padding: 8px 16px; border-radius: 8px; cursor: pointer; background: #1e293b; border: 1px solid #334155; color: #94a3b8; transition: all 0.2s; font-size: 0.9rem; }
+        .tab.active { background: #0ea5e9; color: white; border-color: #0ea5e9; }
+        .tab:hover { border-color: #38bdf8; color: #e2e8f0; }
+        .category { display: none; }
+        .category.active { display: block; }
+        .query-block { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin: 12px 0; overflow-x: auto; }
+        .query-block code { color: #a5f3fc; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85rem; white-space: pre; }
+        .learning-path { counter-reset: step; }
+        .learning-step { position: relative; padding: 16px 16px 16px 60px; margin: 12px 0; background: #1e293b; border-radius: 8px; border-left: 3px solid #0ea5e9; }
+        .learning-step::before { counter-increment: step; content: counter(step); position: absolute; left: 16px; top: 16px; width: 30px; height: 30px; background: #0ea5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; }
+        .coding-systems { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+        .code-sys { background: #1e293b; border-radius: 8px; padding: 16px; border-left: 3px solid #a855f7; }
+        .code-sys .sys-name { color: #c084fc; font-weight: bold; }
+        .code-sys .sys-tables { color: #94a3b8; font-size: 0.85rem; margin-top: 4px; }
+        .search-box { width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 1rem; margin: 16px 0; }
+        .search-box:focus { outline: none; border-color: #38bdf8; }
+        .node { cursor: pointer; }
+        .node rect { transition: all 0.2s; }
+        .node:hover rect { filter: brightness(1.3); stroke-width: 2; }
+        .link { fill: none; stroke-width: 1.5; opacity: 0.6; }
+        .link:hover { opacity: 1; stroke-width: 2.5; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Synthetic Healthcare Data: Clinical & Claims</h1>
+    <p class="subtitle">Interactive Learning Guide — Database: SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER</p>
+
+    <div class="stats">
+        <div class="stat-card"><div class="number">18</div><div class="label">Tables</div></div>
+        <div class="stat-card"><div class="number">~2B+</div><div class="label">Total Records</div></div>
+        <div class="stat-card"><div class="number">1.4M</div><div class="label">Patients</div></div>
+        <div class="stat-card"><div class="number">64.5M</div><div class="label">Encounters</div></div>
+        <div class="stat-card"><div class="number">887M</div><div class="label">Claim Transactions</div></div>
+    </div>
+
+    <h2>Interactive Entity-Relationship Model</h2>
+    <p style="color:#94a3b8; margin-bottom:12px;">Click on any entity to see its columns. Hover over relationships to see join keys.</p>
+    <div class="erm-container">
+        <svg id="erm-svg" viewBox="0 0 1200 750" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#64748b"/>
+                </marker>
+            </defs>
+
+            <!-- Relationships (lines) -->
+            <line x1="220" y1="120" x2="420" y2="120" stroke="#64748b" class="link" marker-end="url(#arrow)">
+                <title>PROVIDERS.ORGANIZATION_ID → ORGANIZATIONS.ORGANIZATION_ID</title>
+            </line>
+            <line x1="300" y1="160" x2="300" y2="260" stroke="#38bdf8" class="link" stroke-width="2" marker-end="url(#arrow)">
+                <title>ENCOUNTERS.PROVIDER_ID → PROVIDERS.PROVIDER_ID</title>
+            </line>
+            <line x1="500" y1="160" x2="500" y2="260" stroke="#38bdf8" class="link" stroke-width="2" marker-end="url(#arrow)">
+                <title>ENCOUNTERS.ORGANIZATION_ID → ORGANIZATIONS.ORGANIZATION_ID</title>
+            </line>
+            <line x1="600" y1="300" x2="750" y2="200" stroke="#64748b" class="link" marker-end="url(#arrow)">
+                <title>ENCOUNTERS.PAYER_ID → PAYERS.PAYER_ID</title>
+            </line>
+            <line x1="100" y1="300" x2="200" y2="300" stroke="#38bdf8" class="link" stroke-width="2" marker-end="url(#arrow)">
+                <title>ENCOUNTERS.PATIENT_ID → PATIENTS.PATIENT_ID</title>
+            </line>
+            <!-- Encounters to clinical events -->
+            <line x1="250" y1="340" x2="100" y2="440" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>CONDITIONS.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <line x1="320" y1="340" x2="250" y2="440" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>PROCEDURES.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <line x1="390" y1="340" x2="400" y2="440" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>MEDICATIONS.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <line x1="460" y1="340" x2="550" y2="440" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>IMMUNIZATIONS.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <line x1="520" y1="340" x2="700" y2="440" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>OBSERVATIONS.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <line x1="560" y1="340" x2="850" y2="440" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>CARE_PLANS.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <!-- Second row clinical -->
+            <line x1="100" y1="520" x2="100" y2="590" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>ALLERGIES.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <line x1="250" y1="520" x2="280" y2="590" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>DEVICES.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <line x1="400" y1="520" x2="460" y2="590" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>IMAGING_STUDIES.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <line x1="550" y1="520" x2="640" y2="590" stroke="#a855f7" class="link" marker-end="url(#arrow)">
+                <title>SUPPLIES.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <!-- Financial -->
+            <line x1="850" y1="340" x2="900" y2="440" stroke="#f59e0b" class="link" stroke-width="2" marker-end="url(#arrow)">
+                <title>CLAIMS.ENCOUNTER_ID → ENCOUNTERS.ENCOUNTER_ID</title>
+            </line>
+            <line x1="950" y1="520" x2="1050" y2="590" stroke="#f59e0b" class="link" marker-end="url(#arrow)">
+                <title>CLAIMS_TX.CLAIM_ID → CLAIMS.CLAIM_ID</title>
+            </line>
+            <line x1="850" y1="200" x2="900" y2="260" stroke="#f59e0b" class="link" marker-end="url(#arrow)">
+                <title>PAYER_TRANSITIONS.PAYER_ID → PAYERS.PAYER_ID</title>
+            </line>
+
+            <!-- ORGANIZATIONS -->
+            <g class="node" data-table="ORGANIZATIONS" onclick="showTable('ORGANIZATIONS')">
+                <rect x="400" y="80" width="180" height="60" rx="8" fill="#1e3a5f" stroke="#38bdf8"/>
+                <text x="490" y="105" text-anchor="middle" fill="#7dd3fc" font-size="11" font-weight="bold">ORGANIZATIONS</text>
+                <text x="490" y="125" text-anchor="middle" fill="#94a3b8" font-size="10">4,034 rows | Facilities</text>
+            </g>
+
+            <!-- PROVIDERS -->
+            <g class="node" data-table="PROVIDERS" onclick="showTable('PROVIDERS')">
+                <rect x="130" y="80" width="180" height="60" rx="8" fill="#1e3a5f" stroke="#38bdf8"/>
+                <text x="220" y="105" text-anchor="middle" fill="#7dd3fc" font-size="11" font-weight="bold">PROVIDERS</text>
+                <text x="220" y="125" text-anchor="middle" fill="#94a3b8" font-size="10">4,034 rows | Doctors</text>
+            </g>
+
+            <!-- PAYERS -->
+            <g class="node" data-table="PAYERS" onclick="showTable('PAYERS')">
+                <rect x="700" y="140" width="180" height="60" rx="8" fill="#1e3a5f" stroke="#f59e0b"/>
+                <text x="790" y="165" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold">PAYERS</text>
+                <text x="790" y="185" text-anchor="middle" fill="#94a3b8" font-size="10">120 rows | Insurers</text>
+            </g>
+
+            <!-- PATIENTS -->
+            <g class="node" data-table="PATIENTS" onclick="showTable('PATIENTS')">
+                <rect x="0" y="260" width="180" height="60" rx="8" fill="#1e3a5f" stroke="#10b981"/>
+                <text x="90" y="285" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="bold">PATIENTS</text>
+                <text x="90" y="305" text-anchor="middle" fill="#94a3b8" font-size="10">1.4M rows | Demographics</text>
+            </g>
+
+            <!-- ENCOUNTERS (Central) -->
+            <g class="node" data-table="ENCOUNTERS" onclick="showTable('ENCOUNTERS')">
+                <rect x="200" y="260" width="420" height="70" rx="8" fill="#0c4a6e" stroke="#38bdf8" stroke-width="3"/>
+                <text x="410" y="287" text-anchor="middle" fill="#38bdf8" font-size="14" font-weight="bold">ENCOUNTERS</text>
+                <text x="410" y="307" text-anchor="middle" fill="#e2e8f0" font-size="11">64.5M rows | Central Hub — Links ALL clinical events</text>
+            </g>
+
+            <!-- Clinical Event Tables Row 1 -->
+            <g class="node" data-table="CONDITIONS" onclick="showTable('CONDITIONS')">
+                <rect x="20" y="430" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="100" y="453" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">CONDITIONS</text>
+                <text x="100" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">38.5M | SNOMED</text>
+            </g>
+            <g class="node" data-table="PROCEDURES" onclick="showTable('PROCEDURES')">
+                <rect x="190" y="430" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="270" y="453" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">PROCEDURES</text>
+                <text x="270" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">148.5M | SNOMED</text>
+            </g>
+            <g class="node" data-table="MEDICATIONS" onclick="showTable('MEDICATIONS')">
+                <rect x="360" y="430" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="440" y="453" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">MEDICATIONS</text>
+                <text x="440" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">59.6M | RxNorm</text>
+            </g>
+            <g class="node" data-table="IMMUNIZATIONS" onclick="showTable('IMMUNIZATIONS')">
+                <rect x="530" y="430" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="610" y="453" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">IMMUNIZATIONS</text>
+                <text x="610" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">11.5M | CVX</text>
+            </g>
+            <g class="node" data-table="OBSERVATIONS" onclick="showTable('OBSERVATIONS')">
+                <rect x="700" y="430" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="780" y="453" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">OBSERVATIONS</text>
+                <text x="780" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">763.4M | LOINC</text>
+            </g>
+            <g class="node" data-table="CARE_PLANS" onclick="showTable('CARE_PLANS')">
+                <rect x="870" y="430" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="950" y="453" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">CARE_PLANS</text>
+                <text x="950" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">4.0M | SNOMED</text>
+            </g>
+
+            <!-- Clinical Event Tables Row 2 -->
+            <g class="node" data-table="ALLERGIES" onclick="showTable('ALLERGIES')">
+                <rect x="20" y="580" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="100" y="603" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">ALLERGIES</text>
+                <text x="100" y="620" text-anchor="middle" fill="#94a3b8" font-size="9">1.3M | Reactions</text>
+            </g>
+            <g class="node" data-table="DEVICES" onclick="showTable('DEVICES')">
+                <rect x="200" y="580" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="280" y="603" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">DEVICES</text>
+                <text x="280" y="620" text-anchor="middle" fill="#94a3b8" font-size="9">5.7M | UDI</text>
+            </g>
+            <g class="node" data-table="IMAGING_STUDIES" onclick="showTable('IMAGING_STUDIES')">
+                <rect x="380" y="580" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="460" y="603" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">IMAGING_STUDIES</text>
+                <text x="460" y="620" text-anchor="middle" fill="#94a3b8" font-size="9">117.9M | DICOM</text>
+            </g>
+            <g class="node" data-table="SUPPLIES" onclick="showTable('SUPPLIES')">
+                <rect x="560" y="580" width="160" height="55" rx="8" fill="#1e293b" stroke="#a855f7"/>
+                <text x="640" y="603" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="bold">SUPPLIES</text>
+                <text x="640" y="620" text-anchor="middle" fill="#94a3b8" font-size="9">25.2M | Quantity</text>
+            </g>
+
+            <!-- Financial Tables -->
+            <g class="node" data-table="CLAIMS" onclick="showTable('CLAIMS')">
+                <rect x="830" y="280" width="180" height="55" rx="8" fill="#1e293b" stroke="#f59e0b"/>
+                <text x="920" y="303" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold">CLAIMS</text>
+                <text x="920" y="320" text-anchor="middle" fill="#94a3b8" font-size="9">124.1M | 8 Diagnoses</text>
+            </g>
+            <g class="node" data-table="CLAIMS_TX" onclick="showTable('CLAIMS_TX')">
+                <rect x="960" y="580" width="180" height="55" rx="8" fill="#1e293b" stroke="#f59e0b"/>
+                <text x="1050" y="603" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="bold">CLAIMS_TX</text>
+                <text x="1050" y="620" text-anchor="middle" fill="#94a3b8" font-size="9">887M | Transactions</text>
+            </g>
+            <g class="node" data-table="PAYER_TRANSITIONS" onclick="showTable('PAYER_TRANSITIONS')">
+                <rect x="900" y="140" width="180" height="60" rx="8" fill="#1e293b" stroke="#f59e0b"/>
+                <text x="990" y="165" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="bold">PAYER_TRANSITIONS</text>
+                <text x="990" y="185" text-anchor="middle" fill="#94a3b8" font-size="9">6.1M | Enrollment History</text>
+            </g>
+
+            <!-- Legend -->
+            <g transform="translate(20, 680)">
+                <text x="0" y="12" fill="#94a3b8" font-size="10" font-weight="bold">LEGEND:</text>
+                <rect x="80" y="0" width="14" height="14" rx="3" fill="none" stroke="#10b981"/>
+                <text x="100" y="12" fill="#94a3b8" font-size="10">Dimension</text>
+                <rect x="180" y="0" width="14" height="14" rx="3" fill="none" stroke="#38bdf8" stroke-width="2"/>
+                <text x="200" y="12" fill="#94a3b8" font-size="10">Central Hub</text>
+                <rect x="300" y="0" width="14" height="14" rx="3" fill="none" stroke="#a855f7"/>
+                <text x="320" y="12" fill="#94a3b8" font-size="10">Clinical Events</text>
+                <rect x="430" y="0" width="14" height="14" rx="3" fill="none" stroke="#f59e0b"/>
+                <text x="450" y="12" fill="#94a3b8" font-size="10">Financial</text>
+            </g>
+        </svg>
+    </div>
+
+    <h2>Explore Tables</h2>
+    <input type="text" class="search-box" id="searchBox" placeholder="Search tables... (e.g., patients, claims, medications)" oninput="filterTables()">
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchCategory('all')">All Tables</div>
+        <div class="tab" onclick="switchCategory('dimension')">Dimensions</div>
+        <div class="tab" onclick="switchCategory('clinical')">Clinical Events</div>
+        <div class="tab" onclick="switchCategory('financial')">Financial</div>
+    </div>
+
+    <div class="table-grid" id="tableGrid"></div>
+    <div class="columns-panel" id="columnsPanel">
+        <h3 id="columnsPanelTitle">Columns</h3>
+        <table class="col-table">
+            <thead><tr><th>Column</th><th>Type</th><th>Role</th><th>Description</th></tr></thead>
+            <tbody id="columnsBody"></tbody>
+        </table>
+    </div>
+
+    <h2>Coding Systems</h2>
+    <div class="coding-systems">
+        <div class="code-sys"><div class="sys-name">SNOMED-CT</div><div class="sys-tables">Conditions, Procedures, Encounters, Allergies, Care Plans, Devices, Supplies</div></div>
+        <div class="code-sys"><div class="sys-name">RxNorm</div><div class="sys-tables">Medications — Drug nomenclature</div></div>
+        <div class="code-sys"><div class="sys-name">LOINC</div><div class="sys-tables">Observations — Lab tests & vital signs</div></div>
+        <div class="code-sys"><div class="sys-name">CVX</div><div class="sys-tables">Immunizations — Vaccine codes</div></div>
+        <div class="code-sys"><div class="sys-name">DICOM</div><div class="sys-tables">Imaging Studies — Medical imaging metadata</div></div>
+    </div>
+
+    <h2>Learning Path</h2>
+    <div class="learning-path">
+        <div class="learning-step"><strong>Understand Core Entities</strong> — Query PATIENTS, ORGANIZATIONS, PROVIDERS, PAYERS to understand the actors in the system.</div>
+        <div class="learning-step"><strong>Explore Encounter Types</strong> — Analyze ENCOUNTERS by class (ambulatory, emergency, inpatient, wellness, urgentcare) and cost patterns.</div>
+        <div class="learning-step"><strong>Clinical Deep Dive</strong> — Join ENCOUNTERS to CONDITIONS, PROCEDURES, MEDICATIONS to understand what happens during visits.</div>
+        <div class="learning-step"><strong>Financial Analysis</strong> — Trace money flow: ENCOUNTERS → CLAIMS → CLAIMS_TX (charges, payments, adjustments, transfers).</div>
+        <div class="learning-step"><strong>Population Health</strong> — Aggregate conditions by demographics, analyze payer coverage vs out-of-pocket costs.</div>
+        <div class="learning-step"><strong>Advanced Analytics</strong> — Time-series on encounters, provider utilization, medication patterns, imaging trends.</div>
+    </div>
+
+    <h2>Sample Queries</h2>
+    <div class="query-block"><code>-- Top 10 most common conditions
+SELECT DESCRIPTION, COUNT(*) AS frequency
+FROM SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER.CONDITIONS
+GROUP BY DESCRIPTION
+ORDER BY frequency DESC
+LIMIT 10;</code></div>
+    <div class="query-block"><code>-- Average encounter cost by class
+SELECT ENCOUNTERCLASS,
+       AVG(TOTAL_CLAIM_COST) AS avg_cost,
+       COUNT(*) AS encounter_count
+FROM SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER.ENCOUNTERS
+GROUP BY ENCOUNTERCLASS
+ORDER BY avg_cost DESC;</code></div>
+    <div class="query-block"><code>-- Full patient journey (multi-table join)
+SELECT p.FIRST || ' ' || p.LAST AS patient,
+       e.ENCOUNTERCLASS, e.ENCOUNTER_START,
+       c.DESCRIPTION AS condition,
+       med.DESCRIPTION AS medication,
+       pay.NAME AS insurer
+FROM SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER.PATIENTS p
+JOIN SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER.ENCOUNTERS e
+    ON p.PATIENT_ID = e.PATIENT_ID
+LEFT JOIN SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER.CONDITIONS c
+    ON e.ENCOUNTER_ID = c.ENCOUNTER_ID
+LEFT JOIN SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER.MEDICATIONS med
+    ON e.ENCOUNTER_ID = med.ENCOUNTER_ID
+JOIN SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER.PAYERS pay
+    ON e.PAYER_ID = pay.PAYER_ID
+LIMIT 20;</code></div>
+</div>
+
+<script>
+const tables = {
+    PATIENTS: { category: 'dimension', rows: '1.4M', desc: 'Patient demographics, address, income, lifetime healthcare expenses and coverage.', columns: [
+        {name:'PATIENT_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'BIRTHDATE', type:'DATE', role:'', desc:'Date of birth'},
+        {name:'DEATHDATE', type:'DATE', role:'', desc:'Date of death (if applicable)'},
+        {name:'SSN', type:'VARCHAR', role:'', desc:'Social Security Number'},
+        {name:'FIRST', type:'VARCHAR', role:'', desc:'First name'},
+        {name:'LAST', type:'VARCHAR', role:'', desc:'Last/surname'},
+        {name:'GENDER', type:'VARCHAR', role:'', desc:'M=Male, F=Female'},
+        {name:'RACE', type:'VARCHAR', role:'', desc:'Primary race'},
+        {name:'ETHNICITY', type:'VARCHAR', role:'', desc:'Primary ethnicity'},
+        {name:'CITY', type:'VARCHAR', role:'', desc:'Address city'},
+        {name:'STATE', type:'VARCHAR', role:'', desc:'Address state'},
+        {name:'INCOME', type:'NUMBER', role:'', desc:'Annual income'},
+        {name:'HEALTHCARE_EXPENSES', type:'NUMBER', role:'', desc:'Lifetime patient-paid costs'},
+        {name:'HEALTHCARE_COVERAGE', type:'NUMBER', role:'', desc:'Lifetime payer-covered costs'}
+    ]},
+    PROVIDERS: { category: 'dimension', rows: '4,034', desc: 'Healthcare providers with specialty and organization affiliation.', columns: [
+        {name:'PROVIDER_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'ORGANIZATION_ID', type:'NUMBER', role:'FK', desc:'→ ORGANIZATIONS'},
+        {name:'NAME', type:'VARCHAR', role:'', desc:'Provider name'},
+        {name:'GENDER', type:'VARCHAR', role:'', desc:'M=Male, F=Female'},
+        {name:'SPECIALITY', type:'VARCHAR', role:'', desc:'Medical specialty'},
+        {name:'ADDRESS', type:'VARCHAR', role:'', desc:'Street address'},
+        {name:'CITY', type:'VARCHAR', role:'', desc:'City'},
+        {name:'STATE', type:'VARCHAR', role:'', desc:'State abbreviation'}
+    ]},
+    ORGANIZATIONS: { category: 'dimension', rows: '4,034', desc: 'Healthcare facilities (hospitals, clinics) with revenue and utilization.', columns: [
+        {name:'ORGANIZATION_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'NAME', type:'VARCHAR', role:'', desc:'Organization name'},
+        {name:'ADDRESS', type:'VARCHAR', role:'', desc:'Street address'},
+        {name:'CITY', type:'VARCHAR', role:'', desc:'City'},
+        {name:'STATE', type:'VARCHAR', role:'', desc:'State'},
+        {name:'PHONE', type:'VARCHAR', role:'', desc:'Phone number'},
+        {name:'REVENUE', type:'NUMBER', role:'', desc:'Total revenue during simulation'},
+        {name:'UTILIZATION', type:'NUMBER', role:'', desc:'Number of encounters performed'}
+    ]},
+    PAYERS: { category: 'dimension', rows: '120', desc: 'Insurance companies with coverage stats, revenue, and quality of life scores.', columns: [
+        {name:'PAYER_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'NAME', type:'VARCHAR', role:'', desc:'Payer name'},
+        {name:'AMOUNT_COVERED', type:'NUMBER', role:'', desc:'Total paid to organizations'},
+        {name:'AMOUNT_UNCOVERED', type:'NUMBER', role:'', desc:'Total not covered (patient pays)'},
+        {name:'REVENUE', type:'NUMBER', role:'', desc:'Total payer revenue'},
+        {name:'UNIQUE_CUSTOMERS', type:'NUMBER', role:'', desc:'Unique enrolled patients'},
+        {name:'QOLS_AVG', type:'NUMBER', role:'', desc:'Average Quality of Life Score'},
+        {name:'MEMBER_MONTHS', type:'NUMBER', role:'', desc:'Total member-months enrolled'}
+    ]},
+    ENCOUNTERS: { category: 'clinical', rows: '64.5M', desc: 'Central hub — every patient visit. Links to all clinical events and financial data.', columns: [
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'ENCOUNTER_START', type:'TIMESTAMP', role:'', desc:'Visit start date/time'},
+        {name:'ENCOUNTER_STOP', type:'TIMESTAMP', role:'', desc:'Visit end date/time'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ORGANIZATION_ID', type:'NUMBER', role:'FK', desc:'→ ORGANIZATIONS'},
+        {name:'PROVIDER_ID', type:'NUMBER', role:'FK', desc:'→ PROVIDERS'},
+        {name:'PAYER_ID', type:'NUMBER', role:'FK', desc:'→ PAYERS'},
+        {name:'ENCOUNTERCLASS', type:'VARCHAR', role:'', desc:'ambulatory, emergency, inpatient, wellness, urgentcare'},
+        {name:'CODE', type:'NUMBER', role:'', desc:'SNOMED-CT encounter code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Encounter type description'},
+        {name:'BASE_ENCOUNTER_COST', type:'NUMBER', role:'', desc:'Base cost (excl. line items)'},
+        {name:'TOTAL_CLAIM_COST', type:'NUMBER', role:'', desc:'Total cost including all services'},
+        {name:'PAYER_COVERAGE', type:'NUMBER', role:'', desc:'Amount covered by payer'},
+        {name:'REASONCODE', type:'NUMBER', role:'', desc:'SNOMED diagnosis code (if targeted)'}
+    ]},
+    CONDITIONS: { category: 'clinical', rows: '38.5M', desc: 'Diagnosed conditions with SNOMED-CT codes. Linked to encounters.', columns: [
+        {name:'CONDITION_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'CONDITION_START', type:'DATE', role:'', desc:'Diagnosis date'},
+        {name:'CONDITION_STOP', type:'DATE', role:'', desc:'Resolution date (if applicable)'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'CODE', type:'NUMBER', role:'', desc:'SNOMED-CT diagnosis code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Condition description'}
+    ]},
+    PROCEDURES: { category: 'clinical', rows: '148.5M', desc: 'Medical procedures performed during encounters. SNOMED-CT coded.', columns: [
+        {name:'PROCEDURE_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'PROC_START', type:'TIMESTAMP', role:'', desc:'Procedure start'},
+        {name:'PROC_STOP', type:'TIMESTAMP', role:'', desc:'Procedure end'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'CODE', type:'NUMBER', role:'', desc:'SNOMED-CT procedure code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Procedure description'},
+        {name:'BASE_COST', type:'NUMBER', role:'', desc:'Line item cost'},
+        {name:'REASONCODE', type:'NUMBER', role:'', desc:'Why this was performed'}
+    ]},
+    MEDICATIONS: { category: 'clinical', rows: '59.6M', desc: 'Prescribed medications with RxNorm codes, costs, and dispense counts.', columns: [
+        {name:'MEDICATION_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'MED_START', type:'TIMESTAMP', role:'', desc:'Prescription start'},
+        {name:'MED_STOP', type:'TIMESTAMP', role:'', desc:'Prescription end'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'PAYER_ID', type:'NUMBER', role:'FK', desc:'→ PAYERS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'CODE', type:'NUMBER', role:'', desc:'RxNorm medication code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Medication name'},
+        {name:'BASE_COST', type:'NUMBER', role:'', desc:'Line item cost'},
+        {name:'TOTALCOST', type:'NUMBER', role:'', desc:'Total cost incl. all dispenses'},
+        {name:'DISPENSES', type:'NUMBER', role:'', desc:'Times prescription filled'}
+    ]},
+    OBSERVATIONS: { category: 'clinical', rows: '763.4M', desc: 'Lab results and vital signs with LOINC codes. Largest clinical table.', columns: [
+        {name:'OBSERVATION_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'OBSERVATION_DATE', type:'TIMESTAMP', role:'', desc:'When observed'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'CATEGORY', type:'VARCHAR', role:'', desc:'Observation category'},
+        {name:'CODE', type:'VARCHAR', role:'', desc:'LOINC code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Lab/vital description'},
+        {name:'VALUE', type:'VARCHAR', role:'', desc:'Recorded value'},
+        {name:'UNITS', type:'VARCHAR', role:'', desc:'Units of measure'},
+        {name:'TYPE', type:'VARCHAR', role:'', desc:'text or numeric'}
+    ]},
+    IMMUNIZATIONS: { category: 'clinical', rows: '11.5M', desc: 'Vaccines administered with CVX codes.', columns: [
+        {name:'IMMUNIZATION_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'IMMUNIZATION_DATE', type:'TIMESTAMP', role:'', desc:'Administration date'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'CODE', type:'NUMBER', role:'', desc:'CVX vaccine code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Vaccine description'},
+        {name:'BASE_COST', type:'NUMBER', role:'', desc:'Cost'}
+    ]},
+    ALLERGIES: { category: 'clinical', rows: '1.3M', desc: 'Patient allergies with reactions and severity levels.', columns: [
+        {name:'ALLERGY_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'ALLERGY_START', type:'DATE', role:'', desc:'Diagnosis date'},
+        {name:'ALLERGY_STOP', type:'DATE', role:'', desc:'End date (if applicable)'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'CODE', type:'NUMBER', role:'', desc:'Allergy code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Allergy description'},
+        {name:'TYPE', type:'VARCHAR', role:'', desc:'allergy or intolerance'},
+        {name:'CATEGORY', type:'VARCHAR', role:'', desc:'drug, food, or environment'},
+        {name:'SEVERITY1', type:'VARCHAR', role:'', desc:'MILD, MODERATE, or SEVERE'}
+    ]},
+    CARE_PLANS: { category: 'clinical', rows: '4.0M', desc: 'Treatment plans with SNOMED-CT codes addressing specific conditions.', columns: [
+        {name:'CARE_PLAN_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'CAREPLAN_START', type:'DATE', role:'', desc:'Plan start date'},
+        {name:'CAREPLAN_STOP', type:'DATE', role:'', desc:'Plan end date'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'CODE', type:'NUMBER', role:'', desc:'SNOMED-CT code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Care plan description'},
+        {name:'REASONCODE', type:'NUMBER', role:'', desc:'Condition being addressed'}
+    ]},
+    DEVICES: { category: 'clinical', rows: '5.7M', desc: 'Medical devices assigned to patients with UDI identifiers.', columns: [
+        {name:'DEVICE_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'DEVICE_START', type:'TIMESTAMP', role:'', desc:'Device assigned'},
+        {name:'DEVICE_STOP', type:'TIMESTAMP', role:'', desc:'Device removed'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'CODE', type:'NUMBER', role:'', desc:'SNOMED-CT device code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Device description'},
+        {name:'UDI', type:'VARCHAR', role:'', desc:'Unique Device Identifier'}
+    ]},
+    IMAGING_STUDIES: { category: 'clinical', rows: '117.9M', desc: 'Radiology and imaging studies with DICOM metadata.', columns: [
+        {name:'IMAGING_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'IMAGE_DATE', type:'TIMESTAMP', role:'', desc:'Study date'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'BODYSITE_CODE', type:'NUMBER', role:'', desc:'SNOMED body structure'},
+        {name:'BODYSITE_DESCRIPTION', type:'VARCHAR', role:'', desc:'Body part imaged'},
+        {name:'MODALITY_CODE', type:'VARCHAR', role:'', desc:'DICOM modality (CT, MRI, etc.)'},
+        {name:'MODALITY_DESCRIPTION', type:'VARCHAR', role:'', desc:'Modality name'}
+    ]},
+    SUPPLIES: { category: 'clinical', rows: '25.2M', desc: 'Medical supplies consumed during encounters.', columns: [
+        {name:'SUPPLY_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'SUPPLY_DATE', type:'DATE', role:'', desc:'Date used'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'CODE', type:'NUMBER', role:'', desc:'SNOMED-CT supply code'},
+        {name:'DESCRIPTION', type:'VARCHAR', role:'', desc:'Supply description'},
+        {name:'QUANTITY', type:'NUMBER', role:'', desc:'Amount used'}
+    ]},
+    CLAIMS: { category: 'financial', rows: '124.1M', desc: 'Insurance claims with up to 8 diagnoses, billing status for primary/secondary/patient.', columns: [
+        {name:'CLAIM_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'PROVIDER_ID', type:'NUMBER', role:'FK', desc:'→ PROVIDERS'},
+        {name:'PRIMARY_PATIENT_INSURANCE_ID', type:'NUMBER', role:'FK', desc:'→ PAYERS (primary)'},
+        {name:'SECONDARY_PATIENT_INSURANCE_ID', type:'NUMBER', role:'FK', desc:'→ PAYERS (secondary)'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'DIAGNOSIS1-8', type:'NUMBER', role:'', desc:'Up to 8 SNOMED-CT diagnosis codes'},
+        {name:'STATUS1', type:'VARCHAR', role:'', desc:'Primary ins status: BILLED/CLOSED'},
+        {name:'STATUSP', type:'VARCHAR', role:'', desc:'Patient status: BILLED/CLOSED'},
+        {name:'OUTSTANDING1', type:'NUMBER', role:'', desc:'Owed by primary insurance'},
+        {name:'OUTSTANDINGP', type:'NUMBER', role:'', desc:'Owed by patient'}
+    ]},
+    CLAIMS_TX: { category: 'financial', rows: '887M', desc: 'Claim transactions: charges, payments, adjustments, and transfers between parties.', columns: [
+        {name:'CLAIMS_TX_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'CLAIM_ID', type:'NUMBER', role:'FK', desc:'→ CLAIMS'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'ENCOUNTER_ID', type:'NUMBER', role:'FK', desc:'→ ENCOUNTERS'},
+        {name:'TYPE', type:'VARCHAR', role:'', desc:'CHARGE, PAYMENT, ADJUSTMENT, TRANSFERIN, TRANSFEROUT'},
+        {name:'AMOUNT', type:'NUMBER', role:'', desc:'Dollar amount'},
+        {name:'METHOD', type:'VARCHAR', role:'', desc:'CASH, CHECK, COPAY, CC, SYSTEM'},
+        {name:'PAYMENTS', type:'NUMBER', role:'', desc:'Payment amount'},
+        {name:'ADJUSTMENTS', type:'NUMBER', role:'', desc:'Adjustment amount'},
+        {name:'TRANSFERS', type:'NUMBER', role:'', desc:'Transfer amount'},
+        {name:'OUTSTANDING', type:'NUMBER', role:'', desc:'Remaining balance'}
+    ]},
+    PAYER_TRANSITIONS: { category: 'financial', rows: '6.1M', desc: 'Patient insurance enrollment history — when coverage started/ended.', columns: [
+        {name:'PAYER_TRANSITIONS_ID', type:'NUMBER', role:'PK', desc:'Primary key'},
+        {name:'PATIENT_ID', type:'NUMBER', role:'FK', desc:'→ PATIENTS'},
+        {name:'MEMBER_ID', type:'VARCHAR', role:'', desc:'Insurance member ID'},
+        {name:'START_YEAR', type:'TIMESTAMP', role:'', desc:'Coverage start'},
+        {name:'END_YEAR', type:'TIMESTAMP', role:'', desc:'Coverage end'},
+        {name:'PAYER_ID', type:'NUMBER', role:'FK', desc:'→ PAYERS (primary)'},
+        {name:'SECONDARY_PAYER_ID', type:'NUMBER', role:'FK', desc:'→ PAYERS (secondary)'},
+        {name:'OWNERSHIP_TYPE', type:'VARCHAR', role:'', desc:'Guardian, Self, or Spouse'}
+    ]}
+};
+
+function renderTableGrid(filter = 'all', search = '') {
+    const grid = document.getElementById('tableGrid');
+    grid.innerHTML = '';
+    Object.entries(tables).forEach(([name, info]) => {
+        if (filter !== 'all' && info.category !== filter) return;
+        if (search && !name.toLowerCase().includes(search) && !info.desc.toLowerCase().includes(search)) return;
+        const card = document.createElement('div');
+        card.className = 'table-card';
+        card.dataset.table = name;
+        card.onclick = () => showTable(name);
+        card.innerHTML = `<div class="name">${name}</div><div class="rows">${info.rows} rows | ${info.category}</div><div class="desc">${info.desc}</div>`;
+        grid.appendChild(card);
+    });
+}
+
+function showTable(name) {
+    document.querySelectorAll('.table-card').forEach(c => c.classList.remove('active'));
+    const card = document.querySelector(`.table-card[data-table="${name}"]`);
+    if (card) card.classList.add('active');
+
+    const panel = document.getElementById('columnsPanel');
+    panel.classList.add('visible');
+    document.getElementById('columnsPanelTitle').textContent = `${name} — Columns`;
+    const tbody = document.getElementById('columnsBody');
+    tbody.innerHTML = '';
+    tables[name].columns.forEach(col => {
+        const roleHtml = col.role === 'PK' ? '<span class="badge badge-pk">PK</span>' :
+                         col.role === 'FK' ? '<span class="badge badge-fk">FK</span>' : '';
+        tbody.innerHTML += `<tr><td><strong>${col.name}</strong></td><td><span class="badge badge-type">${col.type}</span></td><td>${roleHtml}</td><td>${col.desc}</td></tr>`;
+    });
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function switchCategory(cat) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderTableGrid(cat, document.getElementById('searchBox').value.toLowerCase());
+}
+
+function filterTables() {
+    const activeTab = document.querySelector('.tab.active').textContent.toLowerCase().replace(' tables','').replace('dimensions','dimension').replace('clinical events','clinical');
+    const cat = activeTab === 'all' ? 'all' : activeTab;
+    renderTableGrid(cat, document.getElementById('searchBox').value.toLowerCase());
+}
+
+renderTableGrid();
+</script>
+</body>
+</html>

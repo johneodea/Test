@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Views in Snowflake &mdash; A Guide for SQL Analysts</title>
+    <style>
+        :root {
+            --sf-blue: #29b5e8;
+            --sf-dark: #1b2a4a;
+            --sf-light: #f4f8fb;
+            --sf-accent: #6e56cf;
+            --sf-green: #2ea44f;
+            --sf-orange: #e8590c;
+            --sf-border: #d0dbe6;
+            --sf-code-bg: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: #334155;
+            background: #ffffff;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--sf-dark);
+            border-bottom: 4px solid var(--sf-blue);
+            padding-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin-bottom: 2.5rem;
+            font-style: italic;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: var(--sf-dark);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            padding-left: 0.75rem;
+            border-left: 4px solid var(--sf-blue);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            color: var(--sf-accent);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p { margin-bottom: 1rem; }
+
+        .callout {
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 5px solid;
+        }
+
+        .callout-info {
+            background: #eff6ff;
+            border-color: var(--sf-blue);
+        }
+
+        .callout-warning {
+            background: #fffbeb;
+            border-color: var(--sf-orange);
+        }
+
+        .callout-tip {
+            background: #ecfdf5;
+            border-color: var(--sf-green);
+        }
+
+        .callout-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .callout-info .callout-title { color: #1d4ed8; }
+        .callout-warning .callout-title { color: #b45309; }
+        .callout-tip .callout-title { color: #15803d; }
+
+        code {
+            font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+            background: var(--sf-light);
+            padding: 0.15em 0.4em;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--sf-accent);
+        }
+
+        pre {
+            background: var(--sf-code-bg);
+            color: #e2e8f0;
+            padding: 1.25rem 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            font-size: inherit;
+        }
+
+        .keyword { color: #93c5fd; }
+        .function { color: #86efac; }
+        .string { color: #fcd34d; }
+        .comment { color: #64748b; font-style: italic; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.92rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--sf-border);
+        }
+
+        th {
+            background: var(--sf-dark);
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        tr:hover td { background: var(--sf-light); }
+
+        ul, ol {
+            margin: 0.75rem 0 1.25rem 1.5rem;
+        }
+
+        li { margin-bottom: 0.4rem; }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .comparison-box {
+            border: 1px solid var(--sf-border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+
+        .comparison-box h4 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid;
+        }
+
+        .comparison-box.old h4 { color: var(--sf-orange); border-color: var(--sf-orange); }
+        .comparison-box.new h4 { color: var(--sf-green); border-color: var(--sf-green); }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.2em 0.6em;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            vertical-align: middle;
+        }
+
+        .badge-new { background: #dcfce7; color: #15803d; }
+        .badge-ssms { background: #e0e7ff; color: #3730a3; }
+
+        .toc {
+            background: var(--sf-light);
+            border: 1px solid var(--sf-border);
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            color: var(--sf-dark);
+        }
+
+        .toc ol { margin-bottom: 0; }
+        .toc a { color: var(--sf-accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--sf-border);
+            font-size: 0.85rem;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        @media (max-width: 700px) {
+            .comparison { grid-template-columns: 1fr; }
+            body { padding: 1.5rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Semantic Views in Snowflake</h1>
+<p class="subtitle">A practical guide for SQL analysts transitioning from SSMS and traditional relational databases</p>
+
+<div class="toc">
+    <h3>Contents</h3>
+    <ol>
+        <li><a href="#what">What Is a Semantic View?</a></li>
+        <li><a href="#why">Why Should You Care?</a></li>
+        <li><a href="#anatomy">Anatomy of a Semantic View</a></li>
+        <li><a href="#how-it-works">How It Works (SSMS Mental Model)</a></li>
+        <li><a href="#querying">Querying a Semantic View</a></li>
+        <li><a href="#vqrs">Verified Queries (VQRs)</a></li>
+        <li><a href="#tips">Tips &amp; Tricks</a></li>
+        <li><a href="#gotchas">Gotchas &amp; Common Mistakes</a></li>
+        <li><a href="#benefits">Benefits Summary</a></li>
+    </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="what">1. What Is a Semantic View?</h2>
+
+<p>Think of a semantic view as a <strong>business-friendly metadata layer</strong> that sits on top of your physical tables. It doesn't store data&mdash;it stores <em>meaning</em>. It tells both humans and AI what your columns represent, how tables relate, and which calculations are the "official" way to measure things.</p>
+
+<div class="callout callout-info">
+    <div class="callout-title">SSMS Analogy</div>
+    <p>Imagine if you could attach column descriptions, approved join paths, and standard aggregation formulas directly to a SQL Server view&mdash;and then hand that to a natural-language AI that writes correct queries on your behalf. That's essentially what a semantic view does in Snowflake.</p>
+</div>
+
+<p>A semantic view is <strong>not</strong> a traditional database view (it doesn't have a <code>SELECT</code> statement behind it). It's a YAML-based object that defines:</p>
+
+<ul>
+    <li><strong>Tables</strong> &mdash; which physical tables are part of the model</li>
+    <li><strong>Dimensions</strong> &mdash; descriptive/categorical columns (think GROUP BY candidates)</li>
+    <li><strong>Facts</strong> &mdash; numeric/measurable columns (think SUM/AVG candidates)</li>
+    <li><strong>Metrics</strong> &mdash; pre-defined aggregation expressions (your "approved" KPIs)</li>
+    <li><strong>Relationships</strong> &mdash; how tables join together</li>
+    <li><strong>Verified Queries</strong> &mdash; example question-and-SQL pairs that teach AI the right patterns</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="why">2. Why Should You Care?</h2>
+
+<p>As someone who writes SQL daily, you might wonder: "I already know the tables and joins. Why do I need this?" Three reasons:</p>
+
+<ol>
+    <li><strong>AI-Powered Querying:</strong> Snowflake's Cortex Analyst uses semantic views to answer natural-language questions with correct SQL. Without the semantic layer, AI has to guess joins and aggregations&mdash;often incorrectly.</li>
+    <li><strong>Organizational Consistency:</strong> When 15 analysts each write their own version of "total revenue," you get 15 different numbers. Semantic views define the One True Way to calculate each metric.</li>
+    <li><strong>Onboarding:</strong> A new analyst (that's you right now!) can read the semantic view and immediately understand the data model without reverse-engineering ERDs from system catalogs.</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="anatomy">3. Anatomy of a Semantic View</h2>
+
+<p>A semantic view is defined in YAML and deployed as a Snowflake object. Here's the structure at a high level:</p>
+
+<pre><code><span class="keyword">name:</span> PATIENT_DEMOGRAPHICS
+<span class="keyword">description:</span> <span class="string">"Patient demographics combining clinical and claims data"</span>
+
+<span class="keyword">tables:</span>
+  - <span class="keyword">name:</span> PATIENTS
+    <span class="keyword">base_table:</span>
+      <span class="keyword">database:</span> MY_DB
+      <span class="keyword">schema:</span> SILVER
+      <span class="keyword">table:</span> PATIENTS
+    <span class="keyword">dimensions:</span>
+      - <span class="keyword">name:</span> PATIENT_GENDER       <span class="comment"># Friendly name</span>
+        <span class="keyword">expr:</span> GENDER              <span class="comment"># Physical column</span>
+        <span class="keyword">data_type:</span> VARCHAR
+    <span class="keyword">facts:</span>
+      - <span class="keyword">name:</span> PATIENT_INCOME
+        <span class="keyword">expr:</span> INCOME
+        <span class="keyword">data_type:</span> NUMBER
+    <span class="keyword">metrics:</span>
+      - <span class="keyword">name:</span> AVG_PATIENT_INCOME
+        <span class="keyword">expr:</span> AVG(INCOME)
+
+<span class="keyword">relationships:</span>
+  - <span class="keyword">name:</span> PATIENTS_TO_ENCOUNTERS
+    <span class="keyword">left_table:</span> ENCOUNTERS
+    <span class="keyword">right_table:</span> PATIENTS
+    <span class="keyword">relationship_columns:</span>
+      - <span class="keyword">left_column:</span> PATIENT_ID
+        <span class="keyword">right_column:</span> PATIENT_ID
+
+<span class="keyword">verified_queries:</span>
+  - <span class="keyword">name:</span> PATIENT_COUNT_BY_GENDER
+    <span class="keyword">question:</span> <span class="string">"How many patients by gender?"</span>
+    <span class="keyword">sql:</span> <span class="string">"SELECT PATIENTS.PATIENT_GENDER, COUNT(...) ..."</span></code></pre>
+
+<h3>Key Concepts Mapped to SSMS</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Semantic View Concept</th>
+            <th>SSMS / SQL Server Equivalent</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>base_table</code></td>
+            <td>Physical table or view</td>
+            <td>The actual data source</td>
+        </tr>
+        <tr>
+            <td><code>dimension</code></td>
+            <td>Column you'd GROUP BY</td>
+            <td>Gender, State, Date, Category</td>
+        </tr>
+        <tr>
+            <td><code>fact</code></td>
+            <td>Column you'd aggregate</td>
+            <td>Revenue, Cost, Quantity</td>
+        </tr>
+        <tr>
+            <td><code>metric</code></td>
+            <td>Computed column / standard formula</td>
+            <td>Pre-defined aggregation: <code>SUM(Revenue)</code></td>
+        </tr>
+        <tr>
+            <td><code>relationship</code></td>
+            <td>Foreign key / JOIN clause</td>
+            <td>Defines how tables connect</td>
+        </tr>
+        <tr>
+            <td><code>verified_query</code></td>
+            <td>Saved query in SSMS + documentation</td>
+            <td>Teaches AI correct patterns</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="how-it-works">4. How It Works (SSMS Mental Model)</h2>
+
+<p>In SSMS, your workflow is probably:</p>
+<ol>
+    <li>Open Object Explorer, find the tables</li>
+    <li>Check column names, types, and foreign keys</li>
+    <li>Write a JOIN query manually</li>
+    <li>Maybe save it as a view or stored procedure</li>
+</ol>
+
+<p>With a semantic view, the workflow becomes:</p>
+<ol>
+    <li>Read the semantic view YAML (or ask Cortex Analyst)</li>
+    <li>Ask a question in plain English: <em>"What's the average claim cost by encounter class?"</em></li>
+    <li>Cortex Analyst reads the semantic view, generates correct SQL, and returns results</li>
+    <li>You verify the SQL, optionally add it as a VQR for future use</li>
+</ol>
+
+<div class="comparison">
+    <div class="comparison-box old">
+        <h4><span class="badge badge-ssms">SSMS</span> Traditional Approach</h4>
+        <p>You manually discover tables, guess at joins, remember which column is the "right" revenue field, and hope everyone uses the same calculation.</p>
+    </div>
+    <div class="comparison-box new">
+        <h4><span class="badge badge-new">Snowflake</span> Semantic Approach</h4>
+        <p>The model encodes tribal knowledge: correct joins, approved metrics, and verified query patterns. AI and humans both reference the same source of truth.</p>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="querying">5. Querying a Semantic View</h2>
+
+<p>You can interact with a semantic view in two ways:</p>
+
+<h3>Option A: Ask Cortex Analyst (Natural Language)</h3>
+<p>Using the Snowsight UI, Cortex Analyst, or the API, ask questions in plain English. The AI uses the semantic view to generate SQL.</p>
+
+<h3>Option B: Write SQL Directly Against the Base Tables</h3>
+<p>You can still write SQL exactly as you would in SSMS&mdash;the semantic view doesn't restrict direct table access. It simply provides a documented, consistent reference for <em>how</em> to query correctly.</p>
+
+<pre><code><span class="comment">-- You can still write SQL directly (just like SSMS)</span>
+<span class="keyword">SELECT</span> PATIENTS.GENDER <span class="keyword">AS</span> PATIENT_GENDER,
+       <span class="function">COUNT</span>(PATIENTS.PATIENT_ID) <span class="keyword">AS</span> PATIENT_COUNT
+<span class="keyword">FROM</span> SYNTHETIC_HEALTHCARE_DATA__CLINICAL_AND_CLAIMS.SILVER.PATIENTS
+<span class="keyword">GROUP BY</span> PATIENTS.GENDER;</code></pre>
+
+<div class="callout callout-tip">
+    <div class="callout-title">Pro Tip</div>
+    <p>Use <code>DESCRIBE SEMANTIC VIEW db.schema.view_name;</code> to inspect the semantic view's structure directly in a SQL worksheet&mdash;similar to <code>sp_help</code> in SSMS.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="vqrs">6. Verified Queries (VQRs)</h2>
+
+<p>VQRs are the secret weapon of semantic views. They are curated question-and-SQL pairs that:</p>
+
+<ul>
+    <li>Teach Cortex Analyst the <strong>correct</strong> SQL for common business questions</li>
+    <li>Serve as <strong>living documentation</strong>&mdash;new analysts can read them to learn common patterns</li>
+    <li>Act as <strong>regression tests</strong>&mdash;if the model changes, VQRs can be re-validated</li>
+</ul>
+
+<h3>What Makes a Good VQR?</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Good VQR</th>
+            <th>Poor VQR</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Covers a frequently asked business question</td>
+            <td>Extremely niche one-off query</td>
+        </tr>
+        <tr>
+            <td>Uses multiple tables (exercises relationships)</td>
+            <td>Simple <code>SELECT *</code> from one table</td>
+        </tr>
+        <tr>
+            <td>Demonstrates the approved metric calculation</td>
+            <td>Uses a non-standard or incorrect formula</td>
+        </tr>
+        <tr>
+            <td>References logical column names from the model</td>
+            <td>Uses physical column names AI can't map</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="tips">7. Tips &amp; Tricks</h2>
+
+<h3>For the SSMS Veteran</h3>
+
+<ol>
+    <li>
+        <strong>Read the YAML first.</strong> Before writing any query, skim the semantic view YAML. It's your new "Object Explorer." You'll see every table, column, and approved join in one place.
+    </li>
+    <li>
+        <strong>Use logical names in VQR SQL.</strong> VQR queries reference the <em>logical</em> names defined in the semantic view (e.g., <code>PATIENTS.PATIENT_GENDER</code>), not always the physical column name (<code>GENDER</code>). This is like using column aliases consistently.
+    </li>
+    <li>
+        <strong>Metrics are pre-aggregated formulas.</strong> Don't reinvent <code>AVG(INCOME)</code> every time&mdash;the metric <code>AVG_PATIENT_INCOME</code> is already defined. When asking Cortex Analyst questions, reference metric concepts and it will use the correct formula.
+    </li>
+    <li>
+        <strong>Relationships define the JOIN graph.</strong> In SSMS you might join on any shared column. In a semantic view, only declared relationships are "approved" join paths. This prevents accidental fan-outs and incorrect cartesian products.
+    </li>
+    <li>
+        <strong><code>SYSTEM$READ_YAML_FROM_SEMANTIC_VIEW('schema.view')</code></strong> &mdash; Run this in a worksheet to dump the full YAML of any deployed semantic view. Great for quick reference.
+    </li>
+    <li>
+        <strong>Snowflake uses semicolons.</strong> Coming from SSMS, you're used to <code>GO</code> as a batch separator. In Snowflake worksheets, each statement ends with <code>;</code> and runs independently.
+    </li>
+</ol>
+
+<h3>For Working with Cortex Analyst</h3>
+
+<ol>
+    <li>
+        <strong>Be specific in your questions.</strong> Instead of "show me data," ask "What is the total claim cost by encounter class, ordered highest to lowest?"
+    </li>
+    <li>
+        <strong>If AI gets it wrong, add a VQR.</strong> The best way to correct Cortex Analyst is to add a verified query with the correct SQL. It learns from these examples.
+    </li>
+    <li>
+        <strong>Use <code>use_as_onboarding_question: true</code></strong> on 3-5 VQRs to make them appear as suggested questions when users first interact with the model.
+    </li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="gotchas">8. Gotchas &amp; Common Mistakes</h2>
+
+<div class="callout callout-warning">
+    <div class="callout-title">Gotcha #1: A Semantic View Is Not a SQL View</div>
+    <p>You <strong>cannot</strong> <code>SELECT * FROM my_semantic_view</code>. It's a metadata object, not a queryable view. You query the underlying tables directly, or you ask Cortex Analyst to generate queries using the semantic view as context.</p>
+</div>
+
+<div class="callout callout-warning">
+    <div class="callout-title">Gotcha #2: Logical Names vs. Physical Names</div>
+    <p>The semantic view might call a column <code>PATIENT_GENDER</code> while the physical table column is <code>GENDER</code>. VQR SQL uses the <strong>logical names</strong>. Direct SQL against the base tables uses <strong>physical names</strong>. Mixing them up causes errors.</p>
+</div>
+
+<div class="callout callout-warning">
+    <div class="callout-title">Gotcha #3: Relationships Have Direction</div>
+    <p>Unlike SQL Server foreign keys which are bidirectional, semantic view relationships have a <code>left_table</code> and <code>right_table</code>. The naming convention can be unintuitive&mdash;always check the YAML to confirm which table is on which side.</p>
+</div>
+
+<div class="callout callout-warning">
+    <div class="callout-title">Gotcha #4: Deploying Overwrites Everything</div>
+    <p>When you deploy a semantic view with <code>SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML</code>, it replaces the <strong>entire</strong> view definition. There's no <code>ALTER ... ADD COLUMN</code> equivalent for semantic views. Always work from the full YAML, make your changes, and redeploy.</p>
+</div>
+
+<div class="callout callout-warning">
+    <div class="callout-title">Gotcha #5: No <code>TOP N</code>&mdash;Use <code>LIMIT</code></div>
+    <p>Coming from SSMS, you're used to <code>SELECT TOP 10 ...</code>. In Snowflake (and semantic view SQL), it's <code>SELECT ... LIMIT 10</code>. This applies to all Snowflake SQL, not just semantic views.</p>
+</div>
+
+<h3>Other SSMS &rarr; Snowflake Syntax Differences</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>SSMS / SQL Server</th>
+            <th>Snowflake Equivalent</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>SELECT TOP 10 *</code></td>
+            <td><code>SELECT * ... LIMIT 10</code></td>
+        </tr>
+        <tr>
+            <td><code>GETDATE()</code></td>
+            <td><code>CURRENT_TIMESTAMP()</code></td>
+        </tr>
+        <tr>
+            <td><code>ISNULL(col, 0)</code></td>
+            <td><code>COALESCE(col, 0)</code> or <code>NVL(col, 0)</code></td>
+        </tr>
+        <tr>
+            <td><code>CONVERT(VARCHAR, date, 101)</code></td>
+            <td><code>TO_CHAR(date, 'MM/DD/YYYY')</code></td>
+        </tr>
+        <tr>
+            <td><code>LEN(string)</code></td>
+            <td><code>LENGTH(string)</code></td>
+        </tr>
+        <tr>
+            <td><code>CHARINDEX('x', col)</code></td>
+            <td><code>POSITION('x' IN col)</code></td>
+        </tr>
+        <tr>
+            <td><code>+ (string concat)</code></td>
+            <td><code>|| (string concat)</code></td>
+        </tr>
+        <tr>
+            <td><code>sp_help 'table'</code></td>
+            <td><code>DESCRIBE TABLE table</code></td>
+        </tr>
+        <tr>
+            <td><code>sys.tables / INFORMATION_SCHEMA</code></td>
+            <td><code>INFORMATION_SCHEMA</code> or <code>SHOW TABLES</code></td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="benefits">9. Benefits Summary</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Benefit</th>
+            <th>What It Means for You</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Single Source of Truth</strong></td>
+            <td>No more "which revenue column is correct?" debates. The semantic view defines it once.</td>
+        </tr>
+        <tr>
+            <td><strong>AI-Ready</strong></td>
+            <td>Cortex Analyst generates correct SQL instantly. You go from question to answer in seconds.</td>
+        </tr>
+        <tr>
+            <td><strong>Self-Documenting</strong></td>
+            <td>Descriptions, relationships, and VQRs serve as living documentation that never goes stale.</td>
+        </tr>
+        <tr>
+            <td><strong>Faster Onboarding</strong></td>
+            <td>A new analyst reads one YAML file and understands the entire data model&mdash;no tribal knowledge needed.</td>
+        </tr>
+        <tr>
+            <td><strong>Governance</strong></td>
+            <td>Access modifiers control which columns are exposed. Change the model in one place, and all consumers see the update.</td>
+        </tr>
+        <tr>
+            <td><strong>Validation</strong></td>
+            <td>VQRs can be bulk-validated to catch breaking changes before they reach production.</td>
+        </tr>
+        <tr>
+            <td><strong>No Performance Cost</strong></td>
+            <td>Semantic views are metadata-only. They add zero overhead to query execution.</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="callout callout-tip">
+    <div class="callout-title">Bottom Line</div>
+    <p>A semantic view won't replace your SQL skills&mdash;it amplifies them. You still write SQL, you still understand joins, you still think in sets. But now you have a structured, AI-readable, team-shared definition of <em>what the data means</em> that makes everyone faster and more consistent.</p>
+</div>
+
+<div class="footer">
+    <p>Prepared by the Data Analytics Team &bull; Snowflake Semantic Views Documentation &bull; June 2026</p>
+</div>
+
+</body>
+</html>
